@@ -1,12 +1,14 @@
 // Cloudflare Pages Function — /api/leaderboard
-// GET  : renvoie le top 50 du classement (filtrable par ?continent=Afrique)
-// POST : enregistre un nouveau score
+// GET  : renvoie le top 50 du classement, triable par continent et par
+//        nombre de drapeaux (?continent=Afrique&flagCount=10, flagCount=null pour "complet")
+// POST : enregistre un nouveau score (avec points calculés côté client)
 //
 // Nécessite une base D1 liée à ce projet Pages sous le nom de binding "DB".
-// Voir les instructions de déploiement fournies séparément.
+// Voir DEPLOIEMENT.md et migration_v2.sql si ta base existe déjà.
 
 const MAX_LIMIT = 50;
 const ALLOWED_MODES = new Set(["qcm", "saisie"]);
+const ALLOWED_FLAG_COUNTS = new Set([10, 20, 30]);
 
 function jsonResponse(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -19,18 +21,37 @@ export async function onRequestGet({ request, env }) {
   try {
     const url = new URL(request.url);
     const continent = url.searchParams.get("continent");
+    const flagCountParam = url.searchParams.get("flagCount");
 
     let query =
-      "SELECT pseudo, continent, mode, score, total, mistakes, seconds, created_at FROM leaderboard";
+      "SELECT pseudo, continent, mode, score, total, mistakes, seconds, points, flag_count AS flagCount, created_at " +
+      "FROM leaderboard";
+    const conditions = [];
     const params = [];
 
     if (continent && continent !== "Tous") {
-      query += " WHERE continent = ?";
+      conditions.push("continent = ?");
       params.push(continent);
     }
 
-    // Classement par précision (score/total) décroissante puis par rapidité croissante
-    query += " ORDER BY (CAST(score AS REAL) / total) DESC, seconds ASC LIMIT ?";
+    if (flagCountParam !== null) {
+      if (flagCountParam === "null") {
+        conditions.push("flag_count IS NULL");
+      } else {
+        const n = parseInt(flagCountParam, 10);
+        if (ALLOWED_FLAG_COUNTS.has(n)) {
+          conditions.push("flag_count = ?");
+          params.push(n);
+        }
+      }
+    }
+
+    if (conditions.length) {
+      query += " WHERE " + conditions.join(" AND ");
+    }
+
+    // Classement par points décroissants puis par rapidité croissante
+    query += " ORDER BY points DESC, seconds ASC LIMIT ?";
     params.push(MAX_LIMIT);
 
     const stmt = env.DB.prepare(query).bind(...params);
@@ -52,6 +73,13 @@ export async function onRequestPost({ request, env }) {
     const total = clampInt(body.total, 1, 1000);
     const mistakes = clampInt(body.mistakes, 0, 1000);
     const seconds = clampInt(body.seconds, 0, 36000);
+    const points = clampInt(body.points, 0, 1000000);
+
+    let flagCount = null;
+    if (body.flagCount !== null && body.flagCount !== undefined) {
+      const n = parseInt(body.flagCount, 10);
+      if (ALLOWED_FLAG_COUNTS.has(n)) flagCount = n;
+    }
 
     if (!continent) {
       return jsonResponse({ ok: false, error: "Catégorie manquante." }, 400);
@@ -61,10 +89,10 @@ export async function onRequestPost({ request, env }) {
     }
 
     await env.DB.prepare(
-      `INSERT INTO leaderboard (pseudo, continent, mode, score, total, mistakes, seconds)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO leaderboard (pseudo, continent, mode, score, total, mistakes, seconds, points, flag_count)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
-      .bind(pseudo, continent, mode, score, total, mistakes, seconds)
+      .bind(pseudo, continent, mode, score, total, mistakes, seconds, points, flagCount)
       .run();
 
     return jsonResponse({ ok: true });
