@@ -247,6 +247,34 @@
   }
   .leaderboard-btn:hover{ background:var(--gold); color:#fff; }
 
+  .ranked-banner{
+    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    background:var(--navy); border-radius:14px; padding:16px 20px; margin-bottom:20px;
+  }
+  .ranked-banner-left{ display:flex; align-items:center; gap:12px; }
+  .ranked-tier-badge{ font-size:34px; line-height:1; }
+  .ranked-tier-name{ font-family:'Fraunces',serif; font-weight:700; font-size:16px; color:#F3ECDA; }
+  .ranked-rating{ font-size:12.5px; color:#B9C2D1; }
+  .ranked-banner-right{ display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+  .ranked-format-note{ font-size:11.5px; color:#8D96A6; text-align:right; }
+  .ranked-play-btn{ background:var(--gold); color:#1E2A3C; }
+  .ranked-play-btn:hover{ background:#E0AE45; }
+
+  .ranked-result{ text-align:center; margin:-8px 0 20px; }
+  .ranked-result-badge{ font-family:'Fraunces',serif; font-weight:700; font-size:16px; color:var(--navy); }
+  .ranked-result-delta{ font-size:22px; font-weight:700; margin-top:4px; }
+  .ranked-result-delta.up{ color:var(--teal); }
+  .ranked-result-delta.down{ color:var(--coral); }
+  .ranked-result-total{ font-size:13px; color:var(--ink-soft); margin-top:2px; }
+
+  .lb-tabs{ display:flex; gap:8px; margin-bottom:16px; }
+  .lb-tab{
+    border:1.5px solid var(--line); background:var(--paper-2); color:var(--ink-soft);
+    border-radius:999px; padding:8px 18px; font-size:13px; font-weight:600;
+    font-family:'Inter',sans-serif; cursor:pointer;
+  }
+  .lb-tab.selected{ border-color:var(--gold); color:var(--gold); background:#FBF3E2; }
+
   /* ---------- ECRAN CLASSEMENT ---------- */
   .lb-filters{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
   .lb-filter-btn{
@@ -390,6 +418,21 @@
         <button type="button" class="change-link" id="btn-change-pseudo">changer de pseudo</button>
       </div>
     </div>
+
+    <div class="ranked-banner">
+      <div class="ranked-banner-left">
+        <div class="ranked-tier-badge" id="ranked-tier-badge">🥉</div>
+        <div>
+          <div class="ranked-tier-name" id="ranked-tier-name">Bronze</div>
+          <div class="ranked-rating" id="ranked-rating-text">0 points</div>
+        </div>
+      </div>
+      <div class="ranked-banner-right">
+        <div class="ranked-format-note">Format fixe : Monde entier · 20 drapeaux · 4 réponses</div>
+        <button type="button" class="btn-primary ranked-play-btn" id="btn-start-ranked">🏆 Partie classée</button>
+      </div>
+    </div>
+
     <p class="subtitle">Choisis un continent à explorer, puis une façon de jouer. Les drapeaux et les pays viennent de l'article Wikimini « Drapeaux des pays du monde ».</p>
 
     <div class="section-label">1 — Choisis ta destination</div>
@@ -499,6 +542,7 @@
     <div class="result-badge" id="result-score"></div>
     <div class="result-msg" id="result-msg"></div>
     <div class="result-msg" id="result-stats" style="margin-top:-14px;"></div>
+    <div class="ranked-result hidden" id="result-ranked"></div>
     <div class="result-actions">
       <button class="btn-primary" id="btn-replay">Rejouer ce continent</button>
       <button class="btn-ghost" id="btn-home">Changer de continent</button>
@@ -511,9 +555,18 @@
     <button class="top-link" id="btn-leaderboard-back">← Retour</button>
     <h2 style="font-size:22px; margin-bottom:6px;">🏆 Classement</h2>
     <p class="subtitle">Les meilleurs scores, classés par précision puis par rapidité.</p>
-    <div class="lb-filters" id="lb-filters"></div>
-    <div class="lb-filters" id="lb-filters-count"></div>
-    <div id="lb-content"></div>
+    <div class="lb-tabs" id="lb-tabs">
+      <button type="button" class="lb-tab selected" data-tab="casual">Parties</button>
+      <button type="button" class="lb-tab" data-tab="ranked">🏆 Classé</button>
+    </div>
+    <div id="lb-casual-panel">
+      <div class="lb-filters" id="lb-filters"></div>
+      <div class="lb-filters" id="lb-filters-count"></div>
+      <div id="lb-content"></div>
+    </div>
+    <div id="lb-ranked-panel" class="hidden">
+      <div id="lb-ranked-content"></div>
+    </div>
   </div>
 
 </div>
@@ -733,6 +786,62 @@ Object.keys(DATA).forEach(cont=>{
   DATA[cont].forEach(([name])=>{ CONTINENT_OF[name] = cont; });
 });
 
+/* ============ DIFFICULTE DES QCM : proximite geographique + drapeaux qui se ressemblent ============ */
+const SUBREGION_OF = {"Algérie": "Afrique du Nord", "Égypte": "Afrique du Nord", "Libye": "Afrique du Nord", "Maroc": "Afrique du Nord", "Soudan": "Afrique du Nord", "Tunisie": "Afrique du Nord", "Bénin": "Afrique de l'Ouest", "Burkina Faso": "Afrique de l'Ouest", "Cap-Vert": "Afrique de l'Ouest", "Côte d'Ivoire": "Afrique de l'Ouest", "Gambie": "Afrique de l'Ouest", "Ghana": "Afrique de l'Ouest", "Guinée": "Afrique de l'Ouest", "Guinée-Bissau": "Afrique de l'Ouest", "Liberia": "Afrique de l'Ouest", "Mali": "Afrique de l'Ouest", "Mauritanie": "Afrique de l'Ouest", "Niger": "Afrique de l'Ouest", "Nigeria": "Afrique de l'Ouest", "Sénégal": "Afrique de l'Ouest", "Sierra Leone": "Afrique de l'Ouest", "Togo": "Afrique de l'Ouest", "Angola": "Afrique centrale", "Cameroun": "Afrique centrale", "Congo": "Afrique centrale", "République centrafricaine": "Afrique centrale", "République démocratique du Congo": "Afrique centrale", "Gabon": "Afrique centrale", "Guinée équatoriale": "Afrique centrale", "Sao Tomé-et-Principe": "Afrique centrale", "Tchad": "Afrique centrale", "Burundi": "Afrique de l'Est", "Comores": "Afrique de l'Est", "Djibouti": "Afrique de l'Est", "Érythrée": "Afrique de l'Est", "Éthiopie": "Afrique de l'Est", "Kenya": "Afrique de l'Est", "Madagascar": "Afrique de l'Est", "Malawi": "Afrique de l'Est", "Maurice": "Afrique de l'Est", "Mozambique": "Afrique de l'Est", "Ouganda": "Afrique de l'Est", "Rwanda": "Afrique de l'Est", "Seychelles": "Afrique de l'Est", "Somalie": "Afrique de l'Est", "Sud-Soudan": "Afrique de l'Est", "Tanzanie": "Afrique de l'Est", "Afrique du Sud": "Afrique australe", "Botswana": "Afrique australe", "Lesotho": "Afrique australe", "Namibie": "Afrique australe", "Swaziland": "Afrique australe", "Zambie": "Afrique australe", "Zimbabwe": "Afrique australe", "Canada": "Amérique du Nord", "États-Unis": "Amérique du Nord", "Mexique": "Amérique du Nord", "Belize": "Amérique centrale", "Costa Rica": "Amérique centrale", "Guatemala": "Amérique centrale", "Honduras": "Amérique centrale", "Nicaragua": "Amérique centrale", "Panama": "Amérique centrale", "Salvador": "Amérique centrale", "Antigua-et-Barbuda": "Caraïbes", "Bahamas": "Caraïbes", "Barbade": "Caraïbes", "Cuba": "Caraïbes", "Dominique": "Caraïbes", "Grenade": "Caraïbes", "Haïti": "Caraïbes", "Jamaïque": "Caraïbes", "République dominicaine": "Caraïbes", "Saint-Christophe-et-Niévès": "Caraïbes", "Sainte-Lucie": "Caraïbes", "Saint-Vincent-et-les Grenadines": "Caraïbes", "Trinité-et-Tobago": "Caraïbes", "Argentine": "Amérique du Sud", "Bolivie": "Amérique du Sud", "Brésil": "Amérique du Sud", "Chili": "Amérique du Sud", "Colombie": "Amérique du Sud", "Équateur": "Amérique du Sud", "Guyana": "Amérique du Sud", "Paraguay": "Amérique du Sud", "Pérou": "Amérique du Sud", "Suriname": "Amérique du Sud", "Uruguay": "Amérique du Sud", "Venezuela": "Amérique du Sud", "Chine": "Asie de l'Est", "Corée du Nord": "Asie de l'Est", "Corée du Sud": "Asie de l'Est", "Japon": "Asie de l'Est", "Mongolie": "Asie de l'Est", "Taïwan": "Asie de l'Est", "Birmanie": "Asie du Sud-Est", "Brunei": "Asie du Sud-Est", "Cambodge": "Asie du Sud-Est", "Indonésie": "Asie du Sud-Est", "Laos": "Asie du Sud-Est", "Malaisie": "Asie du Sud-Est", "Philippines": "Asie du Sud-Est", "Singapour": "Asie du Sud-Est", "Thaïlande": "Asie du Sud-Est", "Timor oriental": "Asie du Sud-Est", "Viêt Nam": "Asie du Sud-Est", "Afghanistan": "Asie du Sud", "Bangladesh": "Asie du Sud", "Bhoutan": "Asie du Sud", "Inde": "Asie du Sud", "Maldives": "Asie du Sud", "Népal": "Asie du Sud", "Pakistan": "Asie du Sud", "Sri Lanka": "Asie du Sud", "Kazakhstan": "Asie centrale", "Kirghizistan": "Asie centrale", "Ouzbékistan": "Asie centrale", "Tadjikistan": "Asie centrale", "Turkménistan": "Asie centrale", "Arabie saoudite": "Moyen-Orient", "Bahreïn": "Moyen-Orient", "Émirats arabes unis": "Moyen-Orient", "Irak": "Moyen-Orient", "Iran": "Moyen-Orient", "Israël": "Moyen-Orient", "Jordanie": "Moyen-Orient", "Koweït": "Moyen-Orient", "Liban": "Moyen-Orient", "Oman": "Moyen-Orient", "Qatar": "Moyen-Orient", "Syrie": "Moyen-Orient", "Turquie": "Moyen-Orient", "Yémen": "Moyen-Orient", "Allemagne": "Europe de l'Ouest", "Autriche": "Europe de l'Ouest", "Belgique": "Europe de l'Ouest", "France": "Europe de l'Ouest", "Irlande": "Europe de l'Ouest", "Liechtenstein": "Europe de l'Ouest", "Luxembourg": "Europe de l'Ouest", "Monaco": "Europe de l'Ouest", "Pays-Bas": "Europe de l'Ouest", "Royaume-Uni": "Europe de l'Ouest", "Suisse": "Europe de l'Ouest", "Danemark": "Europe du Nord", "Estonie": "Europe du Nord", "Finlande": "Europe du Nord", "Islande": "Europe du Nord", "Lettonie": "Europe du Nord", "Lituanie": "Europe du Nord", "Norvège": "Europe du Nord", "Suède": "Europe du Nord", "Albanie": "Europe du Sud", "Andorre": "Europe du Sud", "Bosnie-Herzégovine": "Europe du Sud", "Chypre": "Europe du Sud", "Croatie": "Europe du Sud", "Espagne": "Europe du Sud", "Grèce": "Europe du Sud", "Italie": "Europe du Sud", "Macédoine du Nord": "Europe du Sud", "Malte": "Europe du Sud", "Monténégro": "Europe du Sud", "Portugal": "Europe du Sud", "Saint-Marin": "Europe du Sud", "Serbie": "Europe du Sud", "Slovénie": "Europe du Sud", "Vatican": "Europe du Sud", "Biélorussie": "Europe de l'Est", "Bulgarie": "Europe de l'Est", "Hongrie": "Europe de l'Est", "Moldavie": "Europe de l'Est", "Pologne": "Europe de l'Est", "République tchèque": "Europe de l'Est", "Roumanie": "Europe de l'Est", "Russie": "Europe de l'Est", "Slovaquie": "Europe de l'Est", "Ukraine": "Europe de l'Est", "Arménie": "Caucase", "Azerbaïdjan": "Caucase", "Géorgie": "Caucase", "Australie": "Australie et Nouvelle-Zélande", "Nouvelle-Zélande": "Australie et Nouvelle-Zélande", "Fidji": "Mélanésie", "Papouasie-Nouvelle-Guinée": "Mélanésie", "Salomon": "Mélanésie", "Vanuatu": "Mélanésie", "Kiribati": "Micronésie", "Marshall": "Micronésie", "Micronésie": "Micronésie", "Nauru": "Micronésie", "Palaos": "Micronésie", "Samoa": "Polynésie", "Tonga": "Polynésie", "Tuvalu": "Polynésie"};
+
+const FLAG_LOOKALIKE_GROUPS = [["Roumanie", "Tchad", "Andorre", "Moldavie"], ["Indonésie", "Monaco", "Pologne"], ["Pays-Bas", "Luxembourg"], ["Irlande", "Côte d'Ivoire", "Italie", "Mexique"], ["Colombie", "Équateur", "Venezuela"], ["Sénégal", "Mali", "Guinée", "Cameroun"], ["Australie", "Nouvelle-Zélande"], ["Norvège", "Islande"], ["Slovénie", "Slovaquie", "Russie"], ["Qatar", "Bahreïn"], ["Argentine", "Uruguay"], ["Salvador", "Honduras", "Nicaragua"], ["Belgique", "Allemagne"], ["Hongrie", "Bulgarie", "Yémen"], ["Chine", "Viêt Nam"], ["Émirats arabes unis", "Koweït", "Soudan"], ["Inde", "Niger"], ["Thaïlande", "Costa Rica"]];
+const LOOKALIKE_OF = {};
+FLAG_LOOKALIKE_GROUPS.forEach(group=>{
+  group.forEach(name=>{
+    if(!LOOKALIKE_OF[name]) LOOKALIKE_OF[name] = new Set();
+    group.forEach(other=>{ if(other!==name) LOOKALIKE_OF[name].add(other); });
+  });
+});
+
+function isCloseTo(a, b){
+  if(a===b) return false;
+  if(SUBREGION_OF[a] && SUBREGION_OF[a] === SUBREGION_OF[b]) return true;
+  if(LOOKALIKE_OF[a] && LOOKALIKE_OF[a].has(b)) return true;
+  return false;
+}
+
+/* Tire 'count' mauvaises reponses avec un dosage variable de reponses "proches" (memes sous-region /
+   drapeaux ressemblants) et "lointaines", pour que la difficulte varie d'une question a l'autre. */
+function pickWrongAnswers(correctName, pool, count){
+  const candidates = pool.filter(c=>c[0]!==correctName);
+  const closeCandidates = shuffle(candidates.filter(c=>isCloseTo(correctName, c[0])));
+  const farCandidates = shuffle(candidates.filter(c=>!isCloseTo(correctName, c[0])));
+
+  // Distribution ponderee du nombre de reponses proches parmi les mauvaises reponses
+  const patterns = [
+    { close: 3, weight: 15 }, // tirage difficile : que des reponses proches
+    { close: 2, weight: 35 },
+    { close: 1, weight: 35 },
+    { close: 0, weight: 15 }, // tirage facile : que des reponses lointaines
+  ];
+  const totalWeight = patterns.reduce((s,p)=>s+p.weight, 0);
+  let r = Math.random() * totalWeight;
+  let chosenClose = patterns[patterns.length-1].close;
+  for(const p of patterns){
+    if(r < p.weight){ chosenClose = p.close; break; }
+    r -= p.weight;
+  }
+
+  let result = closeCandidates.slice(0, chosenClose);
+  let remaining = count - result.length;
+  if(remaining > 0){
+    result = result.concat(farCandidates.slice(0, remaining));
+  }
+  remaining = count - result.length;
+  if(remaining > 0){
+    const usedNames = new Set(result.map(c=>c[0]));
+    const leftover = shuffle(candidates.filter(c=>!usedNames.has(c[0])));
+    result = result.concat(leftover.slice(0, remaining));
+  }
+  return result.map(c=>c[0]);
+}
+
+
 /* ============ ECRANS ============ */
 const screenPseudo = document.getElementById('screen-pseudo');
 const screenHome = document.getElementById('screen-home');
@@ -755,7 +864,8 @@ let state = {
   timerInterval: null,
   elapsedSeconds: 0,
   flagCount: null,
-  pendingChoice: null
+  pendingChoice: null,
+  ranked: false
 };
 
 let selectedContinent = null;
@@ -1012,6 +1122,7 @@ function stopTimer(){
 
 /* ============ LANCEMENT DU QUIZ ============ */
 function startQuiz(){
+  state.ranked = false;
   state.continent = selectedContinent;
   state.mode = selectedMode;
   const useCount = document.getElementById('flagcount-toggle').checked;
@@ -1033,6 +1144,30 @@ function startQuiz(){
   startTimer();
   loadQuestion();
 }
+
+/* ============ MODE CLASSE : format fixe, Monde entier / 20 drapeaux / QCM ============ */
+function startRankedQuiz(){
+  state.ranked = true;
+  selectedContinent = 'Monde entier';
+  selectedMode = 'qcm';
+  const allPairs = allCountryPairs();
+  state.pool = allPairs;
+  state.continent = 'Monde entier';
+  state.mode = 'qcm';
+  state.flagCount = 20;
+  state.order = shuffle(allPairs).slice(0, 20);
+  state.index = 0;
+  state.score = 0;
+  state.mistakes = 0;
+  screenHome.classList.add('hidden');
+  screenResult.classList.add('hidden');
+  screenQuiz.classList.remove('hidden');
+  document.getElementById('cont-label').textContent = '🏆 Partie classée · Monde entier · 20 drapeaux';
+  document.getElementById('mistakes-tag').textContent = '❌ 0 faute';
+  startTimer();
+  loadQuestion();
+}
+document.getElementById('btn-start-ranked').addEventListener('click', startRankedQuiz);
 
 function loadQuestion(){
   state.answered = false;
@@ -1063,12 +1198,11 @@ function loadQuestion(){
     typeArea.classList.add('hidden');
     qcmArea.classList.remove('hidden');
     qcmArea.innerHTML = '';
-    const fast = document.getElementById('fastmode-toggle').checked;
+    const fast = state.ranked ? false : document.getElementById('fastmode-toggle').checked;
     qcmValidateRow.classList.toggle('hidden', fast);
     const btnQcmValidate = document.getElementById('btn-qcm-validate');
     btnQcmValidate.disabled = true;
-    const wrongPool = state.pool.filter(c=>c[0]!==name);
-    const wrongs = shuffle(wrongPool).slice(0,3).map(c=>c[0]);
+    const wrongs = pickWrongAnswers(name, state.pool, 3);
     const options = shuffle([name, ...wrongs]);
     options.forEach(opt=>{
       const b = document.createElement('button');
@@ -1134,7 +1268,7 @@ function validateQcm(btn, chosen, correct){
     document.getElementById('mistakes-tag').textContent = `❌ ${state.mistakes} faute${state.mistakes>1?'s':''}`;
   }
   document.getElementById('score-tag').textContent = `Score : ${state.score}/${state.index+1}`;
-  const fast = document.getElementById('fastmode-toggle').checked;
+  const fast = state.ranked ? false : document.getElementById('fastmode-toggle').checked;
   setTimeout(goNext, fast ? 550 : 1000);
 }
 
@@ -1280,21 +1414,31 @@ function showResult(){
   document.getElementById('result-msg').textContent = `${msg} (${pct}% de bonnes réponses sur ${state.continent})`;
   document.getElementById('result-stats').textContent =
     `⏱ ${formatTime(state.elapsedSeconds)}   ·   ❌ ${state.mistakes} faute${state.mistakes>1?'s':''}   ·   🏆 ${points} points`;
-  saveLeaderboardEntry({
-    pseudo: currentPseudo || 'Joueur',
-    continent: state.continent,
-    mode: state.mode,
-    score: state.score,
-    total: total,
-    mistakes: state.mistakes,
-    seconds: state.elapsedSeconds,
-    points: points,
-    flagCount: state.flagCount || null,
-    date: new Date().toISOString()
-  });
+  document.getElementById('result-ranked').classList.add('hidden');
+  document.getElementById('btn-replay').textContent = 'Rejouer ce continent';
+
+  if(state.ranked){
+    document.getElementById('btn-replay').textContent = 'Rejouer une partie classée';
+    submitRanked(state.score, total);
+  } else {
+    saveLeaderboardEntry({
+      pseudo: currentPseudo || 'Joueur',
+      continent: state.continent,
+      mode: state.mode,
+      score: state.score,
+      total: total,
+      mistakes: state.mistakes,
+      seconds: state.elapsedSeconds,
+      points: points,
+      flagCount: state.flagCount || null,
+      date: new Date().toISOString()
+    });
+  }
 }
 
-document.getElementById('btn-replay').addEventListener('click', startQuiz);
+document.getElementById('btn-replay').addEventListener('click', ()=>{
+  if(state.ranked){ startRankedQuiz(); } else { startQuiz(); }
+});
 document.getElementById('btn-home').addEventListener('click', backHome);
 document.getElementById('btn-quit').addEventListener('click', ()=>{ stopTimer(); backHome(); });
 
@@ -1302,6 +1446,88 @@ function backHome(){
   screenQuiz.classList.add('hidden');
   screenResult.classList.add('hidden');
   screenHome.classList.remove('hidden');
+}
+
+/* ============ CLASSEMENT "MODE CLASSE" (trophées) ============ */
+function trophyDelta(score, total){
+  const pct = total > 0 ? score/total : 0;
+  if(pct >= 0.9) return 30;
+  if(pct >= 0.7) return 15;
+  if(pct >= 0.5) return 5;
+  return -10;
+}
+function tierForRating(rating){
+  if(rating >= 2500) return {name:'Maître', icon:'👑'};
+  if(rating >= 1800) return {name:'Diamant', icon:'💎'};
+  if(rating >= 1200) return {name:'Platine', icon:'🔷'};
+  if(rating >= 700) return {name:'Or', icon:'🥇'};
+  if(rating >= 300) return {name:'Argent', icon:'🥈'};
+  return {name:'Bronze', icon:'🥉'};
+}
+
+async function computeLocalRankedDelta(score, total){
+  const raw = await storeGet('ranked_rating', false);
+  let rating = raw ? parseInt(raw,10) : 0;
+  if(Number.isNaN(rating)) rating = 0;
+  const delta = trophyDelta(score, total);
+  rating = Math.max(0, rating + delta);
+  await storeSet('ranked_rating', String(rating), false);
+  return { delta, rating };
+}
+
+async function submitRanked(score, total){
+  try{
+    const res = await fetch('/api/ranked', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pseudo: currentPseudo || 'Joueur', score, total })
+    });
+    if(res.ok){
+      const data = await res.json();
+      if(data && data.ok){
+        showRankedResult(data.delta, data.rating);
+        return;
+      }
+    }
+  }catch(e){ /* API indisponible -> repli local ci-dessous */ }
+
+  const local = await computeLocalRankedDelta(score, total);
+  showRankedResult(local.delta, local.rating);
+}
+
+function showRankedResult(delta, rating){
+  const t = tierForRating(rating);
+  const el = document.getElementById('result-ranked');
+  el.classList.remove('hidden');
+  const sign = delta >= 0 ? '+' : '';
+  el.innerHTML =
+    `<div class="ranked-result-badge">${t.icon} ${t.name}</div>` +
+    `<div class="ranked-result-delta ${delta>=0?'up':'down'}">${sign}${delta} points ${delta>=0?'🔼':'🔽'}</div>` +
+    `<div class="ranked-result-total">Total : ${rating} points</div>`;
+  updateRankedBadge(rating);
+}
+
+function updateRankedBadge(rating){
+  const t = tierForRating(rating);
+  document.getElementById('ranked-tier-badge').textContent = t.icon;
+  document.getElementById('ranked-tier-name').textContent = t.name;
+  document.getElementById('ranked-rating-text').textContent = `${rating} points`;
+}
+
+async function refreshRankedBadge(){
+  let rating = null;
+  try{
+    const res = await fetch('/api/ranked/player?pseudo=' + encodeURIComponent(currentPseudo || 'Joueur'));
+    if(res.ok){
+      const data = await res.json();
+      if(data && data.ok) rating = data.rating || 0;
+    }
+  }catch(e){}
+  if(rating === null){
+    const raw = await storeGet('ranked_rating', false);
+    rating = raw ? (parseInt(raw,10) || 0) : 0;
+  }
+  updateRankedBadge(rating);
 }
 
 /* ============ PSEUDO & CLASSEMENT (persistant via window.storage, avec repli localStorage / mémoire) ============ */
@@ -1347,6 +1573,7 @@ async function initPlayer(){
     screenPseudo.classList.remove('hidden');
     setTimeout(()=>document.getElementById('pseudo-input').focus(), 50);
   }
+  refreshRankedBadge();
 }
 async function savePseudo(){
   const input = document.getElementById('pseudo-input');
@@ -1357,6 +1584,7 @@ async function savePseudo(){
   document.getElementById('home-pseudo-label').textContent = currentPseudo;
   screenPseudo.classList.add('hidden');
   screenHome.classList.remove('hidden');
+  refreshRankedBadge();
 }
 document.getElementById('btn-pseudo-save').addEventListener('click', savePseudo);
 document.getElementById('pseudo-input').addEventListener('keydown', e=>{ if(e.key==='Enter') savePseudo(); });
@@ -1486,6 +1714,10 @@ function openLeaderboard(fromScreen){
   screenLeaderboard.classList.remove('hidden');
   lbFilter = 'Tous';
   lbCountFilter = 'Tous';
+  document.querySelectorAll('.lb-tab').forEach(t=>t.classList.remove('selected'));
+  document.querySelector('.lb-tab[data-tab="casual"]').classList.add('selected');
+  document.getElementById('lb-casual-panel').classList.remove('hidden');
+  document.getElementById('lb-ranked-panel').classList.add('hidden');
   renderLeaderboard();
 }
 document.getElementById('btn-open-leaderboard').addEventListener('click', ()=>openLeaderboard(screenHome));
@@ -1494,6 +1726,50 @@ document.getElementById('btn-leaderboard-back').addEventListener('click', ()=>{
   screenLeaderboard.classList.add('hidden');
   screenHome.classList.remove('hidden');
 });
+
+document.querySelectorAll('.lb-tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.lb-tab').forEach(t=>t.classList.remove('selected'));
+    tab.classList.add('selected');
+    const which = tab.dataset.tab;
+    document.getElementById('lb-casual-panel').classList.toggle('hidden', which!=='casual');
+    document.getElementById('lb-ranked-panel').classList.toggle('hidden', which!=='ranked');
+    if(which==='ranked') renderRankedLeaderboard();
+  });
+});
+
+async function renderRankedLeaderboard(){
+  const el = document.getElementById('lb-ranked-content');
+  el.innerHTML = '<div class="lb-empty">Chargement…</div>';
+  let list = [];
+  try{
+    const res = await fetch('/api/ranked/leaderboard');
+    if(res.ok){
+      const data = await res.json();
+      if(data && data.ok && Array.isArray(data.players)) list = data.players;
+    }
+  }catch(e){}
+  if(list.length === 0){
+    el.innerHTML = "<div class=\"lb-empty\">Classement classé mondial indisponible pour le moment (nécessite que le site soit déployé avec son API).</div>";
+    return;
+  }
+  let html = '<table class="lb-table"><thead><tr>' +
+    '<th>#</th><th>Pseudo</th><th>Rang</th><th>Points</th><th>Parties</th>' +
+    '</tr></thead><tbody>';
+  list.forEach((p,i)=>{
+    const t = tierForRating(p.rating);
+    const isMe = p.pseudo === currentPseudo;
+    html += `<tr class="${isMe?'me':''}">` +
+      `<td class="lb-rank">${i+1}</td>` +
+      `<td>${escapeHtml(p.pseudo)}</td>` +
+      `<td>${t.icon} ${t.name}</td>` +
+      `<td>${p.rating}</td>` +
+      `<td>${p.games_played}</td>` +
+      `</tr>`;
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
 
 initPlayer();
 
