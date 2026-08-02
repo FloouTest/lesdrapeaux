@@ -164,7 +164,7 @@
   .flag-card.selected{ border-color:var(--teal); background:#EAF4EF; }
   .flag-card .flag-thumb{
     width:100%; aspect-ratio:3/2; border-radius:4px; overflow:hidden;
-    box-shadow:0 3px 8px rgba(30,42,60,0.18); background:#fff;
+    box-shadow:0 3px 8px rgba(30,42,60,0.18); background:#4B5563;
   }
   .flag-card .flag-thumb img{ width:100%; height:100%; display:block; object-fit:contain; padding:6px; box-sizing:border-box; }
   .flag-card .flag-thumb .flag-fallback{ width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:22px; }
@@ -276,7 +276,7 @@
   .flag-visual{
     width:100%; max-width:300px; aspect-ratio:3/2;
     box-shadow:0 6px 22px rgba(0,0,0,0.35);
-    border-radius:3px; overflow:hidden; background:#fff;
+    border-radius:3px; overflow:hidden; background:#4B5563;
   }
   .flag-visual img{ width:100%; height:100%; display:block; object-fit:contain; padding:14px; box-sizing:border-box; }
   .flag-visual .flag-fallback{ width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; font-size:52px; color:var(--ink-soft); }
@@ -1418,7 +1418,7 @@ let lbCountFilter = 'Tous';
 function buildLbFilters(){
   const el = document.getElementById('lb-filters');
   el.innerHTML = '';
-  const options = ['Tous', ...Object.keys(DATA), 'Monde entier', 'Sélection personnalisée'];
+  const options = ['Tous', ...Object.keys(DATA), 'Monde entier'];
   options.forEach(opt=>{
     const b = document.createElement('button');
     b.type = 'button';
