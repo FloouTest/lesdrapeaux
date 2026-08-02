@@ -76,6 +76,20 @@ Ouvre `https://ton-projet.pages.dev/api/leaderboard` dans le navigateur :
 tu dois voir `{"ok":true,"entries":[]}`. Si tu vois une erreur, vérifie le
 binding D1 (étape 5) et que la table existe bien (étape 3, avec `--remote`).
 
+## ⚠️ Tu as déjà une base D1 qui fonctionne ?
+
+Ne relance pas `schema.sql` (il ne modifie pas une table déjà créée).
+Exécute plutôt la migration, une seule fois, pour ajouter les colonnes
+`points` et `flag_count` sans perdre les scores déjà enregistrés :
+
+```bash
+wrangler d1 execute flags-quiz-db --remote --file=./migration_v2.sql
+```
+
+Puis redéploie le site (nouveau push, ou `wrangler pages deploy` à nouveau)
+pour que `index.html` et `functions/api/leaderboard.js` mis à jour prennent
+effet.
+
 ## Notes
 
 - Le pseudo reste stocké localement sur chaque appareil (comme un "nom
