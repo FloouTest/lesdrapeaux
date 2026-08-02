@@ -1,6 +1,6 @@
 -- Schéma de la table du classement mondial (Cloudflare D1 / SQLite)
 -- Utilise ce fichier uniquement pour une INSTALLATION NEUVE.
--- Si ta base existe déjà (classement qui fonctionne), utilise plutôt
+-- Si ta base existe déjà (classement qui fonctionne), utilise plutôt.
 -- migration_v2.sql pour ajouter les nouvelles colonnes sans perdre les données.
 
 CREATE TABLE IF NOT EXISTS leaderboard (
