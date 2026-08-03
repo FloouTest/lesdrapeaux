@@ -1,13 +1,8 @@
 // Cloudflare Pages Function — GET /api/ranked/player?pseudo=...
-// Renvoie la ligue actuelle d'un joueur (division, points, serie) — 0 par defaut
-// s'il n'a jamais joue en classe.
+// Renvoie la ligue actuelle d'un joueur (division, points, série) — 0 par défaut
+// s'il n'a jamais joué en classé — ainsi que la limite quotidienne en vigueur.
 
-function jsonResponse(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json; charset=utf-8" },
-  });
-}
+import { jsonResponse, todayKey, getDailyLimit } from "./_shared.js";
 
 export async function onRequestGet({ request, env }) {
   try {
@@ -18,8 +13,9 @@ export async function onRequestGet({ request, env }) {
       "SELECT division, points, streak, games_played, games_today, games_today_date FROM players WHERE pseudo = ?"
     ).bind(pseudo).first();
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayKey();
     const gamesToday = row && row.games_today_date === today ? row.games_today : 0;
+    const dailyLimit = await getDailyLimit(env);
 
     return jsonResponse({
       ok: true,
@@ -28,6 +24,7 @@ export async function onRequestGet({ request, env }) {
       streak: row ? row.streak : 0,
       games_played: row ? row.games_played : 0,
       games_today: gamesToday,
+      dailyLimit,
     });
   } catch (err) {
     return jsonResponse({ ok: false, error: "Erreur lors de la lecture de la ligue du joueur." }, 500);
