@@ -34,14 +34,15 @@ export async function onRequestPost({ request, env }) {
     const points = Math.max(0, parseInt(body.points, 10) || 0);
     const streak = Math.max(0, parseInt(body.streak, 10) || 0);
     const gamesToday = Math.max(0, parseInt(body.gamesToday, 10) || 0);
+    const gamesPlayed = Math.max(0, parseInt(body.gamesPlayed, 10) || 0);
 
     const existing = await env.DB.prepare("SELECT pseudo FROM players WHERE pseudo = ?").bind(pseudo).first();
     if (!existing) return jsonResponse({ ok: false, error: "Joueur introuvable." }, 404);
 
     await env.DB.prepare(
-      `UPDATE players SET division=?, points=?, streak=?, games_today=?, updated_at=datetime('now')
+      `UPDATE players SET division=?, points=?, streak=?, games_today=?, games_played=?, updated_at=datetime('now')
        WHERE pseudo=?`
-    ).bind(division, points, streak, gamesToday, pseudo).run();
+    ).bind(division, points, streak, gamesToday, gamesPlayed, pseudo).run();
 
     return jsonResponse({ ok: true });
   } catch (err) {
