@@ -1,4 +1,4 @@
-# Rendre le classement mondial — Cloudflare Pages + D1.
+# Rendre le classement mondial — Cloudflare Pages + D1
 
 Ce dossier contient tout ce qu'il faut :
 
