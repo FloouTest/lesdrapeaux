@@ -22,13 +22,21 @@ export function todayKey() {
   return new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
 }
 
+// Barème du bonus de serie : le bonus ne commence qu'a partir de la 2e victoire d'affilee,
+// avec un gros bonus "session parfaite" a la 5e (streak 5 = 5 parties d'affilee a 80%+).
+export function streakBonus(streak) {
+  const table = { 1: 0, 2: 1, 3: 2, 4: 3 };
+  if (streak >= 5) return 15;
+  return table[streak] || 0;
+}
+
 export function computeFpGain(score, total, streak) {
   const accuracy = total > 0 ? score / total : 0;
   const base = Math.round(25 * accuracy); // 0 a 25
   let newStreak, bonus;
   if (accuracy >= 0.8) {
     newStreak = streak + 1;
-    bonus = Math.min(newStreak, 5);
+    bonus = streakBonus(newStreak);
   } else {
     newStreak = 0;
     bonus = 0;
