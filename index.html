@@ -424,7 +424,7 @@
       </div>
     </div>
 
-    <div class="ranked-banner hidden">
+    <div class="ranked-banner">
       <div class="ranked-banner-left">
         <div class="ranked-tier-badge" id="ranked-tier-badge">🧭</div>
         <div>
@@ -563,7 +563,7 @@
     <button class="top-link" id="btn-leaderboard-back">← Retour</button>
     <h2 style="font-size:22px; margin-bottom:6px;">🏆 Classement</h2>
     <p class="subtitle">Les meilleurs scores, classés par précision puis par rapidité.</p>
-    <div class="lb-tabs hidden" id="lb-tabs">
+    <div class="lb-tabs" id="lb-tabs">
       <button type="button" class="lb-tab selected" data-tab="casual">Parties</button>
       <button type="button" class="lb-tab" data-tab="ranked">🏆 Classé</button>
     </div>
@@ -1473,7 +1473,7 @@ const RANKED_TIERS = [
   {name:'Vexillologue Suprême', icon:'👑'},
 ];
 const RANKED_MAX_DIVISION = RANKED_TIERS.length - 1; // index de "Vexillologue Suprême"
-const RANKED_DAILY_LIMIT = 5;
+let RANKED_DAILY_LIMIT = 5; // valeur par defaut, ecrasee par la valeur serveur (reglable par l'admin)
 const RANKED_POINTS_PER_LEAGUE = 100;
 
 function tierForDivision(division){
@@ -1551,6 +1551,7 @@ async function submitRanked(score, total){
     if(res.ok){
       const data = await res.json();
       if(data && data.ok){
+        if(data.dailyLimit) RANKED_DAILY_LIMIT = data.dailyLimit;
         showRankedResult(data);
         return;
       }
@@ -1615,6 +1616,8 @@ async function refreshRankedBadge(){
       try{ data = JSON.parse(raw); }catch(e){}
     }
   }
+  if(data && data.dailyLimit) RANKED_DAILY_LIMIT = data.dailyLimit;
+  document.getElementById('ranked-daily-note').textContent = `${RANKED_DAILY_LIMIT} parties classées par jour`;
   const division = data && data.division !== undefined ? data.division : 0;
   const points = data && data.points !== undefined ? data.points : 0;
   const streak = data && data.streak !== undefined ? data.streak : 0;
