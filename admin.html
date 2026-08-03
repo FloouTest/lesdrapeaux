@@ -147,10 +147,21 @@
             <label>Parties jouées aujourd'hui</label>
             <input type="number" id="player-games-today" min="0">
           </div>
+          <div class="field">
+            <label>Parties jouées (total, all time)</label>
+            <input type="number" id="player-games-played" min="0">
+          </div>
         </div>
         <button class="btn-primary" id="btn-save-player">Enregistrer les modifications</button>
         <div id="player-save-msg" class="msg hidden"></div>
       </div>
+    </div>
+
+    <div class="card">
+      <h2>⚠️ Zone dangereuse</h2>
+      <p class="subtitle">Supprime définitivement TOUS les joueurs et scores du mode classé (ligues, FP, séries, historique). Action irréversible.</p>
+      <button class="btn-danger" id="btn-reset-ranked">Réinitialiser tout le classement classé</button>
+      <div id="reset-ranked-msg" class="msg hidden"></div>
     </div>
 
     <div class="card">
@@ -290,6 +301,7 @@ document.getElementById('btn-search-player').addEventListener('click', async ()=
       document.getElementById('player-points').value = data.player.points;
       document.getElementById('player-streak').value = data.player.streak;
       document.getElementById('player-games-today').value = data.player.games_today;
+      document.getElementById('player-games-played').value = data.player.games_played;
       box.classList.remove('hidden');
     } else {
       showMsg(msg, data.error || 'Joueur introuvable.', false);
@@ -306,12 +318,33 @@ document.getElementById('btn-save-player').addEventListener('click', async ()=>{
     points: parseInt(document.getElementById('player-points').value, 10) || 0,
     streak: parseInt(document.getElementById('player-streak').value, 10) || 0,
     gamesToday: parseInt(document.getElementById('player-games-today').value, 10) || 0,
+    gamesPlayed: parseInt(document.getElementById('player-games-played').value, 10) || 0,
   };
   try{
     const res = await fetch('/api/admin/player', { method:'POST', headers: authHeaders(), body: JSON.stringify(body) });
     const data = await res.json();
     if(res.ok && data.ok){ showMsg(msg, 'Joueur mis à jour.', true); }
     else { showMsg(msg, data.error || 'Erreur.', false); }
+  }catch(e){ showMsg(msg, 'Erreur réseau.', false); }
+});
+
+document.getElementById('btn-reset-ranked').addEventListener('click', async ()=>{
+  const msg = document.getElementById('reset-ranked-msg');
+  msg.classList.add('hidden');
+  if(!confirm("⚠️ Ceci va supprimer DÉFINITIVEMENT tous les joueurs et scores du classement classé (ligues, FP, séries). Continuer ?")) return;
+  if(!confirm("Dernière confirmation : cette action est IRRÉVERSIBLE. Le classement classé sera entièrement vidé. Confirmer la suppression ?")) return;
+  try{
+    const res = await fetch('/api/admin/reset-ranked', {
+      method:'POST', headers: authHeaders(),
+      body: JSON.stringify({ confirm: 'SUPPRIMER LE CLASSEMENT CLASSE' })
+    });
+    const data = await res.json();
+    if(res.ok && data.ok){
+      showMsg(msg, data.message, true);
+      loadTopPlayers();
+    } else {
+      showMsg(msg, data.error || 'Erreur.', false);
+    }
   }catch(e){ showMsg(msg, 'Erreur réseau.', false); }
 });
 

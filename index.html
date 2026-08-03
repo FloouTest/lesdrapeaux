@@ -372,6 +372,22 @@
   }
   .result-msg{ text-align:center; font-size:15.5px; color:var(--ink-soft); margin-bottom:24px; }
   .result-actions{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+
+  .summary-toggle{
+    display:block; margin:20px auto 0; background:none; border:none;
+    color:var(--ink-soft); font-family:'Inter',sans-serif; font-size:13px;
+    text-decoration:underline; cursor:pointer;
+  }
+  .answers-summary{ margin-top:16px; display:flex; flex-direction:column; gap:6px; }
+  .summary-row{
+    display:flex; align-items:center; gap:10px; padding:8px 12px;
+    border-radius:10px; font-size:13.5px; border:1px solid var(--line);
+  }
+  .summary-row.ok{ background:#F3FAF6; }
+  .summary-row.ko{ background:#FCF2F0; }
+  .summary-icon{ flex:none; font-size:15px; }
+  .summary-name{ font-weight:600; color:var(--navy); flex:1; min-width:120px; }
+  .summary-answer{ color:var(--ink-soft); font-size:12.5px; }
   .btn-ghost{
     background:transparent; border:1.5px solid var(--navy); color:var(--navy);
     border-radius:999px; padding:13px 26px; font-family:'Inter',sans-serif; font-weight:600;
@@ -556,6 +572,9 @@
       <button class="btn-ghost" id="btn-home">Changer de continent</button>
       <button class="btn-ghost" id="btn-result-leaderboard">🏆 Voir le classement</button>
     </div>
+
+    <button type="button" class="summary-toggle" id="btn-toggle-summary">📋 Voir le résumé des réponses</button>
+    <div id="answers-summary" class="answers-summary hidden"></div>
   </div>
 
   <!-- ECRAN 4 : CLASSEMENT -->
@@ -629,7 +648,7 @@ const DATA = {
 ["Sierra Leone","https://flagcdn.com/w320/sl.png"],
 ["Somalie","https://flagcdn.com/w320/so.png"],
 ["Soudan","https://flagcdn.com/w320/sd.png"],
-["Sud-Soudan","https://flagcdn.com/w320/ss.png"],
+["Soudan du Sud","https://flagcdn.com/w320/ss.png"],
 ["Swaziland","https://flagcdn.com/w320/sz.png"],
 ["Tanzanie","https://flagcdn.com/w320/tz.png"],
 ["Tchad","https://flagcdn.com/w320/td.png"],
@@ -795,7 +814,7 @@ Object.keys(DATA).forEach(cont=>{
 });
 
 /* ============ DIFFICULTE DES QCM : proximite geographique + drapeaux qui se ressemblent ============ */
-const SUBREGION_OF = {"Algérie": "Afrique du Nord", "Égypte": "Afrique du Nord", "Libye": "Afrique du Nord", "Maroc": "Afrique du Nord", "Soudan": "Afrique du Nord", "Tunisie": "Afrique du Nord", "Bénin": "Afrique de l'Ouest", "Burkina Faso": "Afrique de l'Ouest", "Cap-Vert": "Afrique de l'Ouest", "Côte d'Ivoire": "Afrique de l'Ouest", "Gambie": "Afrique de l'Ouest", "Ghana": "Afrique de l'Ouest", "Guinée": "Afrique de l'Ouest", "Guinée-Bissau": "Afrique de l'Ouest", "Liberia": "Afrique de l'Ouest", "Mali": "Afrique de l'Ouest", "Mauritanie": "Afrique de l'Ouest", "Niger": "Afrique de l'Ouest", "Nigeria": "Afrique de l'Ouest", "Sénégal": "Afrique de l'Ouest", "Sierra Leone": "Afrique de l'Ouest", "Togo": "Afrique de l'Ouest", "Angola": "Afrique centrale", "Cameroun": "Afrique centrale", "Congo": "Afrique centrale", "République centrafricaine": "Afrique centrale", "République démocratique du Congo": "Afrique centrale", "Gabon": "Afrique centrale", "Guinée équatoriale": "Afrique centrale", "Sao Tomé-et-Principe": "Afrique centrale", "Tchad": "Afrique centrale", "Burundi": "Afrique de l'Est", "Comores": "Afrique de l'Est", "Djibouti": "Afrique de l'Est", "Érythrée": "Afrique de l'Est", "Éthiopie": "Afrique de l'Est", "Kenya": "Afrique de l'Est", "Madagascar": "Afrique de l'Est", "Malawi": "Afrique de l'Est", "Maurice": "Afrique de l'Est", "Mozambique": "Afrique de l'Est", "Ouganda": "Afrique de l'Est", "Rwanda": "Afrique de l'Est", "Seychelles": "Afrique de l'Est", "Somalie": "Afrique de l'Est", "Sud-Soudan": "Afrique de l'Est", "Tanzanie": "Afrique de l'Est", "Afrique du Sud": "Afrique australe", "Botswana": "Afrique australe", "Lesotho": "Afrique australe", "Namibie": "Afrique australe", "Swaziland": "Afrique australe", "Zambie": "Afrique australe", "Zimbabwe": "Afrique australe", "Canada": "Amérique du Nord", "États-Unis": "Amérique du Nord", "Mexique": "Amérique du Nord", "Belize": "Amérique centrale", "Costa Rica": "Amérique centrale", "Guatemala": "Amérique centrale", "Honduras": "Amérique centrale", "Nicaragua": "Amérique centrale", "Panama": "Amérique centrale", "Salvador": "Amérique centrale", "Antigua-et-Barbuda": "Caraïbes", "Bahamas": "Caraïbes", "Barbade": "Caraïbes", "Cuba": "Caraïbes", "Dominique": "Caraïbes", "Grenade": "Caraïbes", "Haïti": "Caraïbes", "Jamaïque": "Caraïbes", "République dominicaine": "Caraïbes", "Saint-Christophe-et-Niévès": "Caraïbes", "Sainte-Lucie": "Caraïbes", "Saint-Vincent-et-les Grenadines": "Caraïbes", "Trinité-et-Tobago": "Caraïbes", "Argentine": "Amérique du Sud", "Bolivie": "Amérique du Sud", "Brésil": "Amérique du Sud", "Chili": "Amérique du Sud", "Colombie": "Amérique du Sud", "Équateur": "Amérique du Sud", "Guyana": "Amérique du Sud", "Paraguay": "Amérique du Sud", "Pérou": "Amérique du Sud", "Suriname": "Amérique du Sud", "Uruguay": "Amérique du Sud", "Venezuela": "Amérique du Sud", "Chine": "Asie de l'Est", "Corée du Nord": "Asie de l'Est", "Corée du Sud": "Asie de l'Est", "Japon": "Asie de l'Est", "Mongolie": "Asie de l'Est", "Taïwan": "Asie de l'Est", "Birmanie": "Asie du Sud-Est", "Brunei": "Asie du Sud-Est", "Cambodge": "Asie du Sud-Est", "Indonésie": "Asie du Sud-Est", "Laos": "Asie du Sud-Est", "Malaisie": "Asie du Sud-Est", "Philippines": "Asie du Sud-Est", "Singapour": "Asie du Sud-Est", "Thaïlande": "Asie du Sud-Est", "Timor oriental": "Asie du Sud-Est", "Viêt Nam": "Asie du Sud-Est", "Afghanistan": "Asie du Sud", "Bangladesh": "Asie du Sud", "Bhoutan": "Asie du Sud", "Inde": "Asie du Sud", "Maldives": "Asie du Sud", "Népal": "Asie du Sud", "Pakistan": "Asie du Sud", "Sri Lanka": "Asie du Sud", "Kazakhstan": "Asie centrale", "Kirghizistan": "Asie centrale", "Ouzbékistan": "Asie centrale", "Tadjikistan": "Asie centrale", "Turkménistan": "Asie centrale", "Arabie saoudite": "Moyen-Orient", "Bahreïn": "Moyen-Orient", "Émirats arabes unis": "Moyen-Orient", "Irak": "Moyen-Orient", "Iran": "Moyen-Orient", "Israël": "Moyen-Orient", "Jordanie": "Moyen-Orient", "Koweït": "Moyen-Orient", "Liban": "Moyen-Orient", "Oman": "Moyen-Orient", "Qatar": "Moyen-Orient", "Syrie": "Moyen-Orient", "Turquie": "Moyen-Orient", "Yémen": "Moyen-Orient", "Allemagne": "Europe de l'Ouest", "Autriche": "Europe de l'Ouest", "Belgique": "Europe de l'Ouest", "France": "Europe de l'Ouest", "Irlande": "Europe de l'Ouest", "Liechtenstein": "Europe de l'Ouest", "Luxembourg": "Europe de l'Ouest", "Monaco": "Europe de l'Ouest", "Pays-Bas": "Europe de l'Ouest", "Royaume-Uni": "Europe de l'Ouest", "Suisse": "Europe de l'Ouest", "Danemark": "Europe du Nord", "Estonie": "Europe du Nord", "Finlande": "Europe du Nord", "Islande": "Europe du Nord", "Lettonie": "Europe du Nord", "Lituanie": "Europe du Nord", "Norvège": "Europe du Nord", "Suède": "Europe du Nord", "Albanie": "Europe du Sud", "Andorre": "Europe du Sud", "Bosnie-Herzégovine": "Europe du Sud", "Chypre": "Europe du Sud", "Croatie": "Europe du Sud", "Espagne": "Europe du Sud", "Grèce": "Europe du Sud", "Italie": "Europe du Sud", "Macédoine du Nord": "Europe du Sud", "Malte": "Europe du Sud", "Monténégro": "Europe du Sud", "Portugal": "Europe du Sud", "Saint-Marin": "Europe du Sud", "Serbie": "Europe du Sud", "Slovénie": "Europe du Sud", "Vatican": "Europe du Sud", "Biélorussie": "Europe de l'Est", "Bulgarie": "Europe de l'Est", "Hongrie": "Europe de l'Est", "Moldavie": "Europe de l'Est", "Pologne": "Europe de l'Est", "République tchèque": "Europe de l'Est", "Roumanie": "Europe de l'Est", "Russie": "Europe de l'Est", "Slovaquie": "Europe de l'Est", "Ukraine": "Europe de l'Est", "Arménie": "Caucase", "Azerbaïdjan": "Caucase", "Géorgie": "Caucase", "Australie": "Australie et Nouvelle-Zélande", "Nouvelle-Zélande": "Australie et Nouvelle-Zélande", "Fidji": "Mélanésie", "Papouasie-Nouvelle-Guinée": "Mélanésie", "Salomon": "Mélanésie", "Vanuatu": "Mélanésie", "Kiribati": "Micronésie", "Marshall": "Micronésie", "Micronésie": "Micronésie", "Nauru": "Micronésie", "Palaos": "Micronésie", "Samoa": "Polynésie", "Tonga": "Polynésie", "Tuvalu": "Polynésie"};
+const SUBREGION_OF = {"Algérie": "Afrique du Nord", "Égypte": "Afrique du Nord", "Libye": "Afrique du Nord", "Maroc": "Afrique du Nord", "Soudan": "Afrique du Nord", "Tunisie": "Afrique du Nord", "Bénin": "Afrique de l'Ouest", "Burkina Faso": "Afrique de l'Ouest", "Cap-Vert": "Afrique de l'Ouest", "Côte d'Ivoire": "Afrique de l'Ouest", "Gambie": "Afrique de l'Ouest", "Ghana": "Afrique de l'Ouest", "Guinée": "Afrique de l'Ouest", "Guinée-Bissau": "Afrique de l'Ouest", "Liberia": "Afrique de l'Ouest", "Mali": "Afrique de l'Ouest", "Mauritanie": "Afrique de l'Ouest", "Niger": "Afrique de l'Ouest", "Nigeria": "Afrique de l'Ouest", "Sénégal": "Afrique de l'Ouest", "Sierra Leone": "Afrique de l'Ouest", "Togo": "Afrique de l'Ouest", "Angola": "Afrique centrale", "Cameroun": "Afrique centrale", "Congo": "Afrique centrale", "République centrafricaine": "Afrique centrale", "République démocratique du Congo": "Afrique centrale", "Gabon": "Afrique centrale", "Guinée équatoriale": "Afrique centrale", "Sao Tomé-et-Principe": "Afrique centrale", "Tchad": "Afrique centrale", "Burundi": "Afrique de l'Est", "Comores": "Afrique de l'Est", "Djibouti": "Afrique de l'Est", "Érythrée": "Afrique de l'Est", "Éthiopie": "Afrique de l'Est", "Kenya": "Afrique de l'Est", "Madagascar": "Afrique de l'Est", "Malawi": "Afrique de l'Est", "Maurice": "Afrique de l'Est", "Mozambique": "Afrique de l'Est", "Ouganda": "Afrique de l'Est", "Rwanda": "Afrique de l'Est", "Seychelles": "Afrique de l'Est", "Somalie": "Afrique de l'Est", "Soudan du Sud": "Afrique de l'Est", "Tanzanie": "Afrique de l'Est", "Afrique du Sud": "Afrique australe", "Botswana": "Afrique australe", "Lesotho": "Afrique australe", "Namibie": "Afrique australe", "Swaziland": "Afrique australe", "Zambie": "Afrique australe", "Zimbabwe": "Afrique australe", "Canada": "Amérique du Nord", "États-Unis": "Amérique du Nord", "Mexique": "Amérique du Nord", "Belize": "Amérique centrale", "Costa Rica": "Amérique centrale", "Guatemala": "Amérique centrale", "Honduras": "Amérique centrale", "Nicaragua": "Amérique centrale", "Panama": "Amérique centrale", "Salvador": "Amérique centrale", "Antigua-et-Barbuda": "Caraïbes", "Bahamas": "Caraïbes", "Barbade": "Caraïbes", "Cuba": "Caraïbes", "Dominique": "Caraïbes", "Grenade": "Caraïbes", "Haïti": "Caraïbes", "Jamaïque": "Caraïbes", "République dominicaine": "Caraïbes", "Saint-Christophe-et-Niévès": "Caraïbes", "Sainte-Lucie": "Caraïbes", "Saint-Vincent-et-les Grenadines": "Caraïbes", "Trinité-et-Tobago": "Caraïbes", "Argentine": "Amérique du Sud", "Bolivie": "Amérique du Sud", "Brésil": "Amérique du Sud", "Chili": "Amérique du Sud", "Colombie": "Amérique du Sud", "Équateur": "Amérique du Sud", "Guyana": "Amérique du Sud", "Paraguay": "Amérique du Sud", "Pérou": "Amérique du Sud", "Suriname": "Amérique du Sud", "Uruguay": "Amérique du Sud", "Venezuela": "Amérique du Sud", "Chine": "Asie de l'Est", "Corée du Nord": "Asie de l'Est", "Corée du Sud": "Asie de l'Est", "Japon": "Asie de l'Est", "Mongolie": "Asie de l'Est", "Taïwan": "Asie de l'Est", "Birmanie": "Asie du Sud-Est", "Brunei": "Asie du Sud-Est", "Cambodge": "Asie du Sud-Est", "Indonésie": "Asie du Sud-Est", "Laos": "Asie du Sud-Est", "Malaisie": "Asie du Sud-Est", "Philippines": "Asie du Sud-Est", "Singapour": "Asie du Sud-Est", "Thaïlande": "Asie du Sud-Est", "Timor oriental": "Asie du Sud-Est", "Viêt Nam": "Asie du Sud-Est", "Afghanistan": "Asie du Sud", "Bangladesh": "Asie du Sud", "Bhoutan": "Asie du Sud", "Inde": "Asie du Sud", "Maldives": "Asie du Sud", "Népal": "Asie du Sud", "Pakistan": "Asie du Sud", "Sri Lanka": "Asie du Sud", "Kazakhstan": "Asie centrale", "Kirghizistan": "Asie centrale", "Ouzbékistan": "Asie centrale", "Tadjikistan": "Asie centrale", "Turkménistan": "Asie centrale", "Arabie saoudite": "Moyen-Orient", "Bahreïn": "Moyen-Orient", "Émirats arabes unis": "Moyen-Orient", "Irak": "Moyen-Orient", "Iran": "Moyen-Orient", "Israël": "Moyen-Orient", "Jordanie": "Moyen-Orient", "Koweït": "Moyen-Orient", "Liban": "Moyen-Orient", "Oman": "Moyen-Orient", "Qatar": "Moyen-Orient", "Syrie": "Moyen-Orient", "Turquie": "Moyen-Orient", "Yémen": "Moyen-Orient", "Allemagne": "Europe de l'Ouest", "Autriche": "Europe de l'Ouest", "Belgique": "Europe de l'Ouest", "France": "Europe de l'Ouest", "Irlande": "Europe de l'Ouest", "Liechtenstein": "Europe de l'Ouest", "Luxembourg": "Europe de l'Ouest", "Monaco": "Europe de l'Ouest", "Pays-Bas": "Europe de l'Ouest", "Royaume-Uni": "Europe de l'Ouest", "Suisse": "Europe de l'Ouest", "Danemark": "Europe du Nord", "Estonie": "Europe du Nord", "Finlande": "Europe du Nord", "Islande": "Europe du Nord", "Lettonie": "Europe du Nord", "Lituanie": "Europe du Nord", "Norvège": "Europe du Nord", "Suède": "Europe du Nord", "Albanie": "Europe du Sud", "Andorre": "Europe du Sud", "Bosnie-Herzégovine": "Europe du Sud", "Chypre": "Europe du Sud", "Croatie": "Europe du Sud", "Espagne": "Europe du Sud", "Grèce": "Europe du Sud", "Italie": "Europe du Sud", "Macédoine du Nord": "Europe du Sud", "Malte": "Europe du Sud", "Monténégro": "Europe du Sud", "Portugal": "Europe du Sud", "Saint-Marin": "Europe du Sud", "Serbie": "Europe du Sud", "Slovénie": "Europe du Sud", "Vatican": "Europe du Sud", "Biélorussie": "Europe de l'Est", "Bulgarie": "Europe de l'Est", "Hongrie": "Europe de l'Est", "Moldavie": "Europe de l'Est", "Pologne": "Europe de l'Est", "République tchèque": "Europe de l'Est", "Roumanie": "Europe de l'Est", "Russie": "Europe de l'Est", "Slovaquie": "Europe de l'Est", "Ukraine": "Europe de l'Est", "Arménie": "Caucase", "Azerbaïdjan": "Caucase", "Géorgie": "Caucase", "Australie": "Australie et Nouvelle-Zélande", "Nouvelle-Zélande": "Australie et Nouvelle-Zélande", "Fidji": "Mélanésie", "Papouasie-Nouvelle-Guinée": "Mélanésie", "Salomon": "Mélanésie", "Vanuatu": "Mélanésie", "Kiribati": "Micronésie", "Marshall": "Micronésie", "Micronésie": "Micronésie", "Nauru": "Micronésie", "Palaos": "Micronésie", "Samoa": "Polynésie", "Tonga": "Polynésie", "Tuvalu": "Polynésie"};
 
 const FLAG_LOOKALIKE_GROUPS = [["Roumanie", "Tchad", "Andorre", "Moldavie"], ["Indonésie", "Monaco", "Pologne"], ["Pays-Bas", "Luxembourg"], ["Irlande", "Côte d'Ivoire", "Italie", "Mexique"], ["Colombie", "Équateur", "Venezuela"], ["Sénégal", "Mali", "Guinée", "Cameroun"], ["Australie", "Nouvelle-Zélande"], ["Norvège", "Islande"], ["Slovénie", "Slovaquie", "Russie"], ["Qatar", "Bahreïn"], ["Argentine", "Uruguay"], ["Salvador", "Honduras", "Nicaragua"], ["Belgique", "Allemagne"], ["Hongrie", "Bulgarie", "Yémen"], ["Chine", "Viêt Nam"], ["Émirats arabes unis", "Koweït", "Soudan"], ["Inde", "Niger"], ["Thaïlande", "Costa Rica"]];
 const LOOKALIKE_OF = {};
@@ -873,7 +892,8 @@ let state = {
   elapsedSeconds: 0,
   flagCount: null,
   pendingChoice: null,
-  ranked: false
+  ranked: false,
+  answersLog: []
 };
 
 let selectedContinent = null;
@@ -1143,6 +1163,7 @@ function startQuiz(){
   state.index = 0;
   state.score = 0;
   state.mistakes = 0;
+  state.answersLog = [];
   screenHome.classList.add('hidden');
   screenResult.classList.add('hidden');
   screenQuiz.classList.remove('hidden');
@@ -1167,6 +1188,7 @@ function startRankedQuiz(){
   state.index = 0;
   state.score = 0;
   state.mistakes = 0;
+  state.answersLog = [];
   screenHome.classList.add('hidden');
   screenResult.classList.add('hidden');
   screenQuiz.classList.remove('hidden');
@@ -1263,7 +1285,8 @@ function validateQcm(btn, chosen, correct){
     if(b.textContent === correct) b.classList.add('correct');
   });
   const fb = document.getElementById('feedback');
-  if(chosen === correct){
+  const isCorrect = chosen === correct;
+  if(isCorrect){
     state.score++;
     btn.classList.add('correct');
     fb.textContent = '✓ Bonne réponse !';
@@ -1275,6 +1298,7 @@ function validateQcm(btn, chosen, correct){
     state.mistakes++;
     document.getElementById('mistakes-tag').textContent = `❌ ${state.mistakes} faute${state.mistakes>1?'s':''}`;
   }
+  state.answersLog.push({ name: correct, correct: isCorrect, userAnswer: chosen });
   document.getElementById('score-tag').textContent = `Score : ${state.score}/${state.index+1}`;
   const fast = state.ranked ? false : document.getElementById('fastmode-toggle').checked;
   setTimeout(goNext, fast ? 550 : 1000);
@@ -1300,6 +1324,7 @@ function toleranceFor(len){
   return 3;
 }
 const ALIASES = {
+  "Soudan du Sud": ["Sud-Soudan", "Sud Soudan"],
   "Macédoine du Nord": ["Macédoine", "ARYM"],
   "République démocratique du Congo": ["RDC", "Congo Kinshasa", "Congo-Kinshasa"],
   "Congo": ["République du Congo", "Congo Brazzaville", "Congo-Brazzaville"],
@@ -1320,6 +1345,17 @@ const ALIASES = {
   "Corée du Nord": ["Coree du Nord"],
   "Corée du Sud": ["Coree du Sud"],
 };
+/* Vrai si a et b contiennent exactement les memes lettres (dans un ordre different) :
+   typique d'une inversion de lettres ("Bouthan" / "Bhoutan"), qui doit compter comme
+   UNE seule faute meme si la distance de Levenshtein brute vaut 2 ou plus. */
+function isLetterRearrangement(a, b){
+  if(!a || !b) return false;
+  const stripSpaces = s => s.replace(/[\s-]/g,'');
+  const sa = stripSpaces(a), sb = stripSpaces(b);
+  if(sa.length !== sb.length || sa.length === 0) return false;
+  if(sa === sb) return false; // deja identique, pas la peine de passer par ce cas
+  return sa.split('').sort().join('') === sb.split('').sort().join('');
+}
 function isAnswerCorrect(userInput, correctName){
   const userNorm = normalize(userInput);
   if(!userNorm) return {ok:false, dist:null};
@@ -1329,12 +1365,14 @@ function isAnswerCorrect(userInput, correctName){
     const candNorm = normalize(candidate);
     const d1 = levenshtein(userNorm, candNorm);
     if(d1 <= toleranceFor(candNorm.length)) return {ok:true, dist: d1};
+    if(isLetterRearrangement(userNorm, candNorm)) return {ok:true, dist: 1};
     bestDist = Math.min(bestDist, d1);
     const looseUser = stripConnectors(userNorm);
     const looseCand = stripConnectors(candNorm);
     if(looseUser && looseCand){
       const d2 = levenshtein(looseUser, looseCand);
       if(d2 <= toleranceFor(looseCand.length)) return {ok:true, dist: d2};
+      if(isLetterRearrangement(looseUser, looseCand)) return {ok:true, dist: 1};
     }
   }
   return {ok:false, dist: bestDist};
@@ -1386,6 +1424,7 @@ function submitTyped(){
     state.mistakes++;
     document.getElementById('mistakes-tag').textContent = `❌ ${state.mistakes} faute${state.mistakes>1?'s':''}`;
   }
+  state.answersLog.push({ name, correct: isCorrect, userAnswer: input.value.trim() || '(aucune réponse)' });
   document.getElementById('score-tag').textContent = `Score : ${state.score}/${state.index+1}`;
   document.getElementById('btn-next').classList.remove('hidden');
 }
@@ -1424,6 +1463,7 @@ function showResult(){
     `⏱ ${formatTime(state.elapsedSeconds)}   ·   ❌ ${state.mistakes} faute${state.mistakes>1?'s':''}   ·   🏆 ${points} points`;
   document.getElementById('result-ranked').classList.add('hidden');
   document.getElementById('btn-replay').textContent = 'Rejouer ce continent';
+  renderAnswersSummary();
 
   if(state.ranked){
     document.getElementById('btn-replay').textContent = 'Rejouer une partie classée';
@@ -1443,6 +1483,42 @@ function showResult(){
     });
   }
 }
+
+function renderAnswersSummary(){
+  const box = document.getElementById('answers-summary');
+  const toggleBtn = document.getElementById('btn-toggle-summary');
+  box.classList.add('hidden');
+  box.innerHTML = '';
+  toggleBtn.textContent = '📋 Voir le résumé des réponses';
+
+  state.answersLog.forEach(entry=>{
+    const row = document.createElement('div');
+    row.className = 'summary-row ' + (entry.correct ? 'ok' : 'ko');
+    const icon = document.createElement('span');
+    icon.className = 'summary-icon';
+    icon.textContent = entry.correct ? '✅' : '❌';
+    const name = document.createElement('span');
+    name.className = 'summary-name';
+    name.textContent = entry.name;
+    row.appendChild(icon);
+    row.appendChild(name);
+    if(!entry.correct){
+      const answer = document.createElement('span');
+      answer.className = 'summary-answer';
+      answer.textContent = `toi : ${entry.userAnswer}`;
+      row.appendChild(answer);
+    }
+    box.appendChild(row);
+  });
+}
+
+document.getElementById('btn-toggle-summary').addEventListener('click', ()=>{
+  const box = document.getElementById('answers-summary');
+  const toggleBtn = document.getElementById('btn-toggle-summary');
+  const willShow = box.classList.contains('hidden');
+  box.classList.toggle('hidden', !willShow);
+  toggleBtn.textContent = willShow ? '📋 Masquer le résumé des réponses' : '📋 Voir le résumé des réponses';
+});
 
 document.getElementById('btn-replay').addEventListener('click', ()=>{
   if(state.ranked){ startRankedQuiz(); } else { startQuiz(); }
@@ -1482,13 +1558,20 @@ function tierForDivision(division){
 }
 
 /* Gain de FP pour une partie : 25 FP max selon la precision + bonus de serie (1 a 5 FP) si 80%+ */
+/* Barème du bonus de serie : le bonus ne commence qu'a partir de la 2e victoire d'affilee,
+   avec un gros bonus "session parfaite" a la 5e (streak 5 = 5 parties d'affilee a 80%+). */
+function streakBonus(streak){
+  const table = { 1:0, 2:1, 3:2, 4:3 };
+  if(streak >= 5) return 15;
+  return table[streak] || 0;
+}
 function computeFpGain(score, total, streak){
   const accuracy = total > 0 ? score/total : 0;
   const base = Math.round(25 * accuracy); // 0 a 25
   let newStreak, bonus;
   if(accuracy >= 0.8){
     newStreak = streak + 1;
-    bonus = Math.min(newStreak, 5);
+    bonus = streakBonus(newStreak);
   } else {
     newStreak = 0;
     bonus = 0;
@@ -1570,18 +1653,18 @@ function showRankedResult(r){
   if(r.dailyLimitReached){
     el.innerHTML =
       `<div class="ranked-result-badge">${t.icon} ${t.name}</div>` +
-      `<div class="ranked-result-total">Limite de ${RANKED_DAILY_LIMIT} parties classées atteinte pour aujourd'hui — cette partie n'a pas rapporté de FP.</div>`;
+      `<div class="ranked-result-total">🚫 Tu as déjà joué tes ${RANKED_DAILY_LIMIT} parties classées du jour — cette partie n'a rapporté aucun FP. Reviens demain !</div>`;
   } else {
     const bonusText = r.bonus > 0 ? ` (dont +${r.bonus} série 🔥)` : '';
     el.innerHTML =
       `<div class="ranked-result-badge">${t.icon} ${t.name}</div>` +
       `<div class="ranked-result-delta up">+${r.gained} FP${bonusText}</div>` +
-      `<div class="ranked-result-total">${r.points}/${RANKED_POINTS_PER_LEAGUE} FP dans cette ligue · ${r.gamesToday}/${RANKED_DAILY_LIMIT} parties classées aujourd'hui</div>`;
+      `<div class="ranked-result-total">${r.points}/${RANKED_POINTS_PER_LEAGUE} FP dans cette ligue · ${Math.max(0, RANKED_DAILY_LIMIT - r.gamesToday)}/${RANKED_DAILY_LIMIT} parties classées restantes aujourd'hui</div>`;
   }
-  updateRankedBadge(r.division, r.points, r.streak);
+  updateRankedBadge(r.division, r.points, r.streak, r.gamesToday);
 }
 
-function updateRankedBadge(division, points, streak){
+function updateRankedBadge(division, points, streak, gamesToday){
   const t = tierForDivision(division);
   document.getElementById('ranked-tier-badge').textContent = t.icon;
   document.getElementById('ranked-tier-name').textContent = t.name;
@@ -1598,6 +1681,12 @@ function updateRankedBadge(division, points, streak){
     streakEl.textContent = `🔥 Série de ${streak} partie${streak>1?'s':''} à 80%+`;
   } else {
     streakEl.classList.add('hidden');
+  }
+  if(gamesToday !== undefined){
+    const remaining = Math.max(0, RANKED_DAILY_LIMIT - gamesToday);
+    document.getElementById('ranked-daily-note').textContent =
+      remaining > 0 ? `${remaining}/${RANKED_DAILY_LIMIT} parties classées restantes aujourd'hui`
+                     : `0/${RANKED_DAILY_LIMIT} partie classée restante aujourd'hui`;
   }
 }
 
@@ -1617,11 +1706,11 @@ async function refreshRankedBadge(){
     }
   }
   if(data && data.dailyLimit) RANKED_DAILY_LIMIT = data.dailyLimit;
-  document.getElementById('ranked-daily-note').textContent = `${RANKED_DAILY_LIMIT} parties classées par jour`;
   const division = data && data.division !== undefined ? data.division : 0;
   const points = data && data.points !== undefined ? data.points : 0;
   const streak = data && data.streak !== undefined ? data.streak : 0;
-  updateRankedBadge(division, points, streak);
+  const gamesToday = data && data.games_today !== undefined ? data.games_today : (data && data.gamesToday !== undefined ? data.gamesToday : 0);
+  updateRankedBadge(division, points, streak, gamesToday);
 }
 
 /* ============ PSEUDO & CLASSEMENT (persistant via window.storage, avec repli localStorage / mémoire) ============ */
@@ -1734,13 +1823,13 @@ async function saveLeaderboardEntry(entry){
   }catch(e){ /* le classement est une fonctionnalité bonus, on ne bloque jamais le jeu */ }
 }
 
-let lbFilter = 'Tous';
+let lbFilter = 'Europe';
 let lbCountFilter = 'Tous';
 
 function buildLbFilters(){
   const el = document.getElementById('lb-filters');
   el.innerHTML = '';
-  const options = ['Tous', ...Object.keys(DATA), 'Monde entier'];
+  const options = ['Europe', 'Afrique', 'Amérique', 'Asie', 'Océanie', 'Monde entier'];
   options.forEach(opt=>{
     const b = document.createElement('button');
     b.type = 'button';
@@ -1806,7 +1895,7 @@ function escapeHtml(str){
 function openLeaderboard(fromScreen){
   fromScreen.classList.add('hidden');
   screenLeaderboard.classList.remove('hidden');
-  lbFilter = 'Tous';
+  lbFilter = 'Europe';
   lbCountFilter = 'Tous';
   document.querySelectorAll('.lb-tab').forEach(t=>t.classList.remove('selected'));
   document.querySelector('.lb-tab[data-tab="casual"]').classList.add('selected');
