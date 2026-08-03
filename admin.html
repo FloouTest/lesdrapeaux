@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administration — Mode Classé</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3ECDA; --paper-2:#EAE0C7; --ink:#1E2A3C; --ink-soft:#4B5A70;
+    --navy:#1E2A3C; --teal:#2F8F6D; --coral:#D65B44; --gold:#C9982F;
+    --line: rgba(30,42,60,0.16);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; background:var(--paper); color:var(--ink);
+    font-family:'Inter',sans-serif; display:flex; justify-content:center;
+    padding:40px 16px 60px;
+  }
+  .stage{ width:100%; max-width:640px; }
+  h1,h2{ font-family:'Fraunces',serif; margin:0 0 4px; }
+  h1{ font-size:24px; }
+  .subtitle{ color:var(--ink-soft); font-size:14px; margin:0 0 24px; }
+  .card{
+    background:#FBF8F0; border:1px solid var(--line); border-radius:16px;
+    padding:24px; margin-bottom:20px; box-shadow:0 8px 20px rgba(30,42,60,0.08);
+  }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:12.5px; font-weight:600; color:var(--ink-soft); margin-bottom:6px; }
+  .field input{
+    width:100%; border:1.5px solid var(--line); border-radius:10px; padding:11px 13px;
+    font-family:'Inter',sans-serif; font-size:14.5px; background:#fff; color:var(--ink);
+  }
+  .field input:focus{ outline:none; border-color:var(--navy); }
+  .row{ display:flex; gap:10px; align-items:flex-end; }
+  .row .field{ flex:1; }
+  button{
+    font-family:'Inter',sans-serif; font-weight:600; font-size:14px; cursor:pointer;
+    border:none; border-radius:999px; padding:11px 22px; white-space:nowrap;
+  }
+  .btn-primary{ background:var(--navy); color:#F3ECDA; }
+  .btn-primary:hover{ background:#141C29; }
+  .btn-danger{ background:var(--coral); color:#fff; }
+  .btn-danger:hover{ background:#B94530; }
+  .btn-gold{ background:var(--gold); color:#1E2A3C; }
+  .btn-gold:hover{ background:#B3861F; }
+  .btn-ghost{ background:none; border:1.5px solid var(--line); color:var(--ink); }
+  .btn-ghost:hover{ border-color:var(--navy); }
+  button:disabled{ opacity:.5; cursor:not-allowed; }
+  .msg{ font-size:13.5px; margin-top:12px; padding:10px 12px; border-radius:8px; }
+  .msg.ok{ background:#E4F3EA; color:var(--teal); }
+  .msg.err{ background:#FBE6E1; color:var(--coral); }
+  .hidden{ display:none !important; }
+  .player-box{ margin-top:14px; border-top:1px solid var(--line); padding-top:14px; }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .topbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
+  table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  th{ text-align:left; font-size:11px; text-transform:uppercase; color:var(--ink-soft); padding:6px 8px; border-bottom:1.5px solid var(--line); }
+  td{ padding:7px 8px; border-bottom:1px solid var(--line); }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <!-- ECRAN CONNEXION -->
+  <div id="screen-login" class="card">
+    <h1>🔐 Administration</h1>
+    <p class="subtitle">Mode Classé — Atlas des Drapeaux</p>
+    <div class="field">
+      <label>Identifiant</label>
+      <input type="text" id="login-user" autocomplete="username" placeholder="admin">
+    </div>
+    <div class="field">
+      <label>Mot de passe</label>
+      <input type="password" id="login-pass" autocomplete="current-password" placeholder="••••••••">
+    </div>
+    <button class="btn-primary" id="btn-login" style="width:100%;">Se connecter</button>
+    <div id="login-msg" class="msg err hidden"></div>
+  </div>
+
+  <!-- ECRAN ADMIN -->
+  <div id="screen-admin" class="hidden">
+    <div class="topbar">
+      <div>
+        <h1>🏳️ Mode Classé</h1>
+        <p class="subtitle" style="margin:0;">Panneau d'administration</p>
+      </div>
+      <button class="btn-ghost" id="btn-logout">Se déconnecter</button>
+    </div>
+
+    <div class="card">
+      <h2>Limite quotidienne</h2>
+      <p class="subtitle">Nombre de parties classées autorisées par joueur et par jour.</p>
+      <div class="row">
+        <div class="field">
+          <label>Parties par jour</label>
+          <input type="number" id="daily-limit-input" min="1" max="100" value="5">
+        </div>
+        <button class="btn-primary" id="btn-save-limit">Enregistrer</button>
+      </div>
+      <div id="settings-msg" class="msg hidden"></div>
+    </div>
+
+    <div class="card">
+      <h2>Compteur quotidien de tous les joueurs</h2>
+      <p class="subtitle">Actions globales, appliquées immédiatement à tous les joueurs.</p>
+      <div class="row">
+        <button class="btn-danger" id="btn-reset-all">Réinitialiser à 0 pour tout le monde</button>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <div class="field">
+          <label>Parties bonus à accorder</label>
+          <input type="number" id="bonus-amount-input" min="1" max="50" value="1">
+        </div>
+        <button class="btn-gold" id="btn-grant-bonus">Accorder à tout le monde</button>
+      </div>
+      <div id="reset-msg" class="msg hidden"></div>
+    </div>
+
+    <div class="card">
+      <h2>Rechercher un joueur</h2>
+      <div class="row">
+        <div class="field">
+          <label>Pseudo</label>
+          <input type="text" id="player-search-input" placeholder="Pseudo exact…">
+        </div>
+        <button class="btn-primary" id="btn-search-player">Rechercher</button>
+      </div>
+      <div id="player-search-msg" class="msg hidden"></div>
+
+      <div id="player-box" class="player-box hidden">
+        <div class="grid2">
+          <div class="field">
+            <label>Division (0 = Explorateur 3, 12 = Vexillologue Suprême)</label>
+            <input type="number" id="player-division" min="0" max="12">
+          </div>
+          <div class="field">
+            <label>Points dans la ligue</label>
+            <input type="number" id="player-points" min="0">
+          </div>
+          <div class="field">
+            <label>Série actuelle</label>
+            <input type="number" id="player-streak" min="0">
+          </div>
+          <div class="field">
+            <label>Parties jouées aujourd'hui</label>
+            <input type="number" id="player-games-today" min="0">
+          </div>
+        </div>
+        <button class="btn-primary" id="btn-save-player">Enregistrer les modifications</button>
+        <div id="player-save-msg" class="msg hidden"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Top 10 classé</h2>
+      <div id="top-players-content">Chargement…</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const TIER_NAMES = [
+  'Explorateur 3','Explorateur 2','Explorateur 1',
+  'Géographe 3','Géographe 2','Géographe 1',
+  'Cartographe 3','Cartographe 2','Cartographe 1',
+  'Vexillologue 3','Vexillologue 2','Vexillologue 1',
+  'Vexillologue Suprême'
+];
+
+let creds = null;
+
+function authHeaders(){
+  return {
+    'Content-Type': 'application/json',
+    'X-Admin-User': creds.user,
+    'X-Admin-Password': creds.pass
+  };
+}
+
+function showMsg(el, text, ok){
+  el.textContent = text;
+  el.className = 'msg ' + (ok ? 'ok' : 'err');
+  el.classList.remove('hidden');
+}
+
+async function tryLogin(user, pass){
+  const res = await fetch('/api/admin/settings', {
+    headers: { 'X-Admin-User': user, 'X-Admin-Password': pass }
+  });
+  if(res.ok){
+    const data = await res.json();
+    return data && data.ok ? data : null;
+  }
+  return null;
+}
+
+document.getElementById('btn-login').addEventListener('click', async ()=>{
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const msg = document.getElementById('login-msg');
+  msg.classList.add('hidden');
+  const data = await tryLogin(user, pass);
+  if(data){
+    creds = { user, pass };
+    sessionStorage.setItem('admin_creds', JSON.stringify(creds));
+    enterAdmin(data.dailyLimit);
+  } else {
+    showMsg(msg, 'Identifiant ou mot de passe incorrect.', false);
+  }
+});
+document.getElementById('login-pass').addEventListener('keydown', e=>{
+  if(e.key === 'Enter') document.getElementById('btn-login').click();
+});
+
+document.getElementById('btn-logout').addEventListener('click', ()=>{
+  creds = null;
+  sessionStorage.removeItem('admin_creds');
+  document.getElementById('screen-admin').classList.add('hidden');
+  document.getElementById('screen-login').classList.remove('hidden');
+  document.getElementById('login-pass').value = '';
+});
+
+function enterAdmin(dailyLimit){
+  document.getElementById('screen-login').classList.add('hidden');
+  document.getElementById('screen-admin').classList.remove('hidden');
+  document.getElementById('daily-limit-input').value = dailyLimit;
+  loadTopPlayers();
+}
+
+document.getElementById('btn-save-limit').addEventListener('click', async ()=>{
+  const msg = document.getElementById('settings-msg');
+  const dailyLimit = parseInt(document.getElementById('daily-limit-input').value, 10) || 5;
+  try{
+    const res = await fetch('/api/admin/settings', {
+      method:'POST', headers: authHeaders(), body: JSON.stringify({ dailyLimit })
+    });
+    const data = await res.json();
+    if(res.ok && data.ok){
+      showMsg(msg, `Limite quotidienne mise à jour : ${data.dailyLimit} parties/jour.`, true);
+    } else {
+      showMsg(msg, data.error || 'Erreur.', false);
+    }
+  }catch(e){ showMsg(msg, 'Erreur réseau.', false); }
+});
+
+document.getElementById('btn-reset-all').addEventListener('click', async ()=>{
+  const msg = document.getElementById('reset-msg');
+  if(!confirm("Réinitialiser le compteur quotidien de TOUS les joueurs à 0 ? Cette action est immédiate.")) return;
+  try{
+    const res = await fetch('/api/admin/reset-daily', {
+      method:'POST', headers: authHeaders(), body: JSON.stringify({ mode:'reset' })
+    });
+    const data = await res.json();
+    if(res.ok && data.ok){ showMsg(msg, data.message, true); }
+    else { showMsg(msg, data.error || 'Erreur.', false); }
+  }catch(e){ showMsg(msg, 'Erreur réseau.', false); }
+});
+
+document.getElementById('btn-grant-bonus').addEventListener('click', async ()=>{
+  const msg = document.getElementById('reset-msg');
+  const amount = parseInt(document.getElementById('bonus-amount-input').value, 10) || 1;
+  try{
+    const res = await fetch('/api/admin/reset-daily', {
+      method:'POST', headers: authHeaders(), body: JSON.stringify({ mode:'bonus', amount })
+    });
+    const data = await res.json();
+    if(res.ok && data.ok){ showMsg(msg, data.message, true); }
+    else { showMsg(msg, data.error || 'Erreur.', false); }
+  }catch(e){ showMsg(msg, 'Erreur réseau.', false); }
+});
+
+let currentPlayerPseudo = null;
+
+document.getElementById('btn-search-player').addEventListener('click', async ()=>{
+  const msg = document.getElementById('player-search-msg');
+  const box = document.getElementById('player-box');
+  box.classList.add('hidden');
+  msg.classList.add('hidden');
+  const pseudo = document.getElementById('player-search-input').value.trim();
+  if(!pseudo) return;
+  try{
+    const res = await fetch('/api/admin/player?pseudo=' + encodeURIComponent(pseudo), { headers: authHeaders() });
+    const data = await res.json();
+    if(res.ok && data.ok){
+      currentPlayerPseudo = data.player.pseudo;
+      document.getElementById('player-division').value = data.player.division;
+      document.getElementById('player-points').value = data.player.points;
+      document.getElementById('player-streak').value = data.player.streak;
+      document.getElementById('player-games-today').value = data.player.games_today;
+      box.classList.remove('hidden');
+    } else {
+      showMsg(msg, data.error || 'Joueur introuvable.', false);
+    }
+  }catch(e){ showMsg(msg, 'Erreur réseau.', false); }
+});
+
+document.getElementById('btn-save-player').addEventListener('click', async ()=>{
+  const msg = document.getElementById('player-save-msg');
+  if(!currentPlayerPseudo) return;
+  const body = {
+    pseudo: currentPlayerPseudo,
+    division: parseInt(document.getElementById('player-division').value, 10) || 0,
+    points: parseInt(document.getElementById('player-points').value, 10) || 0,
+    streak: parseInt(document.getElementById('player-streak').value, 10) || 0,
+    gamesToday: parseInt(document.getElementById('player-games-today').value, 10) || 0,
+  };
+  try{
+    const res = await fetch('/api/admin/player', { method:'POST', headers: authHeaders(), body: JSON.stringify(body) });
+    const data = await res.json();
+    if(res.ok && data.ok){ showMsg(msg, 'Joueur mis à jour.', true); }
+    else { showMsg(msg, data.error || 'Erreur.', false); }
+  }catch(e){ showMsg(msg, 'Erreur réseau.', false); }
+});
+
+async function loadTopPlayers(){
+  const el = document.getElementById('top-players-content');
+  try{
+    const res = await fetch('/api/ranked/leaderboard');
+    const data = await res.json();
+    if(!res.ok || !data.ok || !data.players.length){
+      el.textContent = 'Aucun joueur classé pour le moment.';
+      return;
+    }
+    let html = '<table><thead><tr><th>#</th><th>Pseudo</th><th>Ligue</th><th>Points</th><th>Parties</th></tr></thead><tbody>';
+    data.players.slice(0,10).forEach((p,i)=>{
+      html += `<tr><td>${i+1}</td><td>${p.pseudo}</td><td>${TIER_NAMES[p.division] || '?'}</td><td>${p.points}</td><td>${p.games_played}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    el.innerHTML = html;
+  }catch(e){
+    el.textContent = 'Erreur de chargement.';
+  }
+}
+
+// Reconnexion automatique si des identifiants sont deja en memoire pour cet onglet
+(function autoLogin(){
+  const raw = sessionStorage.getItem('admin_creds');
+  if(!raw) return;
+  try{
+    const saved = JSON.parse(raw);
+    tryLogin(saved.user, saved.pass).then(data=>{
+      if(data){ creds = saved; enterAdmin(data.dailyLimit); }
+      else { sessionStorage.removeItem('admin_creds'); }
+    });
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
