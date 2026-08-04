@@ -154,6 +154,11 @@
         </div>
         <button class="btn-primary" id="btn-save-player">Enregistrer les modifications</button>
         <div id="player-save-msg" class="msg hidden"></div>
+
+        <div style="margin-top:18px; border-top:1px solid var(--line); padding-top:14px;">
+          <h2 style="font-size:16px;">Historique (10 dernières parties)</h2>
+          <div id="player-history-content">—</div>
+        </div>
       </div>
     </div>
 
@@ -303,11 +308,36 @@ document.getElementById('btn-search-player').addEventListener('click', async ()=
       document.getElementById('player-games-today').value = data.player.games_today;
       document.getElementById('player-games-played').value = data.player.games_played;
       box.classList.remove('hidden');
+      loadPlayerHistory(currentPlayerPseudo);
     } else {
       showMsg(msg, data.error || 'Joueur introuvable.', false);
     }
   }catch(e){ showMsg(msg, 'Erreur réseau.', false); }
 });
+
+async function loadPlayerHistory(pseudo){
+  const el = document.getElementById('player-history-content');
+  el.textContent = 'Chargement…';
+  try{
+    const res = await fetch('/api/history?pseudo=' + encodeURIComponent(pseudo));
+    const data = await res.json();
+    if(!res.ok || !data.ok || !data.history || data.history.length === 0){
+      el.textContent = 'Aucune partie enregistrée pour ce joueur.';
+      return;
+    }
+    let html = '<table><thead><tr><th>Date</th><th>Type</th><th>Score</th><th>Points</th></tr></thead><tbody>';
+    data.history.forEach(e=>{
+      const isRanked = e.type === 'ranked';
+      const label = isRanked ? `🏆 ${TIER_NAMES[e.division] || 'Classé'}` : (e.label || '');
+      const pts = isRanked ? `${e.points>=0?'+':''}${e.points} FP${e.daily_limit_reached?' (limite)':''}` : `${e.points ?? 0} pts`;
+      html += `<tr><td>${(e.created_at||'').replace('T',' ').slice(0,16)}</td><td>${label}</td><td>${e.score}/${e.total}</td><td>${pts}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    el.innerHTML = html;
+  }catch(e){
+    el.textContent = 'Erreur réseau.';
+  }
+}
 
 document.getElementById('btn-save-player').addEventListener('click', async ()=>{
   const msg = document.getElementById('player-save-msg');

@@ -636,6 +636,7 @@
     <div class="lb-tabs" id="lb-tabs">
       <button type="button" class="lb-tab selected" data-tab="casual">Parties</button>
       <button type="button" class="lb-tab" data-tab="ranked">🏆 Classé</button>
+      <button type="button" class="lb-tab" data-tab="history">🕐 Historique</button>
     </div>
     <div id="lb-casual-panel">
       <div class="lb-filters" id="lb-filters"></div>
@@ -644,6 +645,10 @@
     </div>
     <div id="lb-ranked-panel" class="hidden">
       <div id="lb-ranked-content"></div>
+    </div>
+    <div id="lb-history-panel" class="hidden">
+      <p class="subtitle">Tes 10 dernières parties (classiques et classées), les plus récentes en premier.</p>
+      <div id="lb-history-content"></div>
     </div>
   </div>
 
@@ -1660,6 +1665,16 @@ function todayKey(){
 }
 
 /* Repli local (hors API) : suit division/points/serie/limite quotidienne sur cet appareil uniquement */
+async function appendLocalRankedHistory(entry){
+  try{
+    const raw = await storeGet('ranked_history_local', false);
+    const list = raw ? JSON.parse(raw) : [];
+    list.push(entry);
+    const trimmed = list.slice(-10);
+    await storeSet('ranked_history_local', JSON.stringify(trimmed), false);
+  }catch(e){ /* l'historique local est un bonus, on ne bloque jamais le jeu */ }
+}
+
 async function computeLocalRankedGain(score, total){
   const raw = await storeGet('ranked_local', false);
   let local = { division:0, points:0, streak:0, gamesToday:0, gamesTodayDate: todayKey() };
@@ -1673,6 +1688,10 @@ async function computeLocalRankedGain(score, total){
 
   if(local.gamesToday >= RANKED_DAILY_LIMIT){
     await storeSet('ranked_local', JSON.stringify(local), false);
+    await appendLocalRankedHistory({
+      created_at: new Date().toISOString(), type:'ranked', label:'Classé', mode:'saisie',
+      score, total, points:0, division:local.division, daily_limit_reached:1
+    });
     return { base:0, bonus:0, gained:0, division:local.division, points:local.points,
       streak:local.streak, dailyLimitReached:true, gamesToday:local.gamesToday };
   }
@@ -1684,6 +1703,10 @@ async function computeLocalRankedGain(score, total){
   local.streak = fp.newStreak;
   local.gamesToday += 1;
   await storeSet('ranked_local', JSON.stringify(local), false);
+  await appendLocalRankedHistory({
+    created_at: new Date().toISOString(), type:'ranked', label:'Classé', mode:'saisie',
+    score, total, points:fp.gained, division:applied.division, daily_limit_reached:0
+  });
 
   return { base:fp.base, bonus:fp.bonus, gained:fp.gained, division:local.division, points:local.points,
     streak:local.streak, dailyLimitReached:false, gamesToday:local.gamesToday };
@@ -2013,6 +2036,7 @@ function openLeaderboard(fromScreen){
   document.querySelector('.lb-tab[data-tab="casual"]').classList.add('selected');
   document.getElementById('lb-casual-panel').classList.remove('hidden');
   document.getElementById('lb-ranked-panel').classList.add('hidden');
+  document.getElementById('lb-history-panel').classList.add('hidden');
   renderLeaderboard();
 }
 document.getElementById('btn-open-leaderboard').addEventListener('click', ()=>openLeaderboard(screenHome));
@@ -2029,9 +2053,80 @@ document.querySelectorAll('.lb-tab').forEach(tab=>{
     const which = tab.dataset.tab;
     document.getElementById('lb-casual-panel').classList.toggle('hidden', which!=='casual');
     document.getElementById('lb-ranked-panel').classList.toggle('hidden', which!=='ranked');
+    document.getElementById('lb-history-panel').classList.toggle('hidden', which!=='history');
     if(which==='ranked') renderRankedLeaderboard();
+    if(which==='history') renderHistory();
   });
 });
+
+function formatHistoryDate(iso){
+  if(!iso) return '';
+  // Le serveur stocke les dates en UTC (datetime('now')) ; on les affiche a l'heure de Paris.
+  const d = new Date(iso.replace(' ', 'T') + 'Z');
+  if(Number.isNaN(d.getTime())) return iso;
+  const datePart = d.toLocaleDateString('fr-FR', { timeZone:'Europe/Paris', day:'2-digit', month:'2-digit', year:'2-digit' });
+  const timePart = d.toLocaleTimeString('fr-FR', { timeZone:'Europe/Paris', hour:'2-digit', minute:'2-digit' });
+  return `${datePart} à ${timePart}`;
+}
+
+async function fetchHistory(pseudo){
+  try{
+    const res = await fetch('/api/history?pseudo=' + encodeURIComponent(pseudo));
+    if(res.ok){
+      const data = await res.json();
+      if(data && data.ok && Array.isArray(data.history)) return data.history;
+    }
+  }catch(e){ /* API indisponible -> repli local ci-dessous */ }
+
+  // Repli local : on combine le classement local ("Parties") et l'historique classe local
+  const local = [];
+  try{
+    const raw = await storeGet('leaderboard', true);
+    if(raw){
+      const list = JSON.parse(raw).filter(e=>e.pseudo === pseudo);
+      list.forEach(e=>local.push({
+        created_at: e.date, type:'casual', label: e.continent, mode: e.mode,
+        score: e.score, total: e.total, points: e.points, division: null
+      }));
+    }
+  }catch(e){}
+  try{
+    const raw = await storeGet('ranked_history_local', false);
+    if(raw){
+      JSON.parse(raw).forEach(e=>local.push(e));
+    }
+  }catch(e){}
+  local.sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
+  return local.slice(0,10);
+}
+
+async function renderHistory(){
+  const el = document.getElementById('lb-history-content');
+  el.innerHTML = '<div class="lb-empty">Chargement…</div>';
+  const history = await fetchHistory(currentPseudo || 'Joueur');
+  if(!history || history.length === 0){
+    el.innerHTML = "<div class=\"lb-empty\">Aucune partie enregistrée pour l'instant. Termine un quiz pour apparaître ici !</div>";
+    return;
+  }
+  let html = '<table class="lb-table"><thead><tr>' +
+    '<th>Date</th><th>Catégorie</th><th>Mode</th><th>Score</th><th>Points</th>' +
+    '</tr></thead><tbody>';
+  history.forEach(e=>{
+    const isRanked = e.type === 'ranked';
+    const modeLabel = isRanked ? 'Classé · Saisie' : (e.mode==='qcm' ? '4 réponses' : 'Saisie');
+    const label = isRanked ? '🏆 Classé' : escapeHtml(e.label || '');
+    const pointsLabel = isRanked ? `${e.points >= 0 ? '+' : ''}${e.points} FP${e.daily_limit_reached ? ' (limite atteinte)' : ''}` : `${e.points ?? 0} pts`;
+    html += `<tr>` +
+      `<td>${formatHistoryDate(e.created_at)}</td>` +
+      `<td>${label}</td>` +
+      `<td>${modeLabel}</td>` +
+      `<td>${e.score}/${e.total}</td>` +
+      `<td>${pointsLabel}</td>` +
+      `</tr>`;
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
 
 async function renderRankedLeaderboard(){
   const el = document.getElementById('lb-ranked-content');
