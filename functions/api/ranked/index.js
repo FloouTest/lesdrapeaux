@@ -42,6 +42,11 @@ export async function onRequestPost({ request, env }) {
            updated_at = datetime('now')`
       ).bind(pseudo, row.division, row.points, row.streak, row.games_played, gamesToday, today).run();
 
+      await env.DB.prepare(
+        `INSERT INTO ranked_history (pseudo, score, total, gained, division_after, points_after, daily_limit_reached)
+         VALUES (?, ?, ?, 0, ?, ?, 1)`
+      ).bind(pseudo, score, total, row.division, row.points).run();
+
       return jsonResponse({
         ok: true, base: 0, bonus: 0, gained: 0,
         division: row.division, points: row.points, streak: row.streak,
@@ -66,6 +71,11 @@ export async function onRequestPost({ request, env }) {
          games_today_date = excluded.games_today_date,
          updated_at = datetime('now')`
     ).bind(pseudo, applied.division, applied.points, fp.newStreak, gamesPlayed, gamesToday, today).run();
+
+    await env.DB.prepare(
+      `INSERT INTO ranked_history (pseudo, score, total, gained, division_after, points_after, daily_limit_reached)
+       VALUES (?, ?, ?, ?, ?, ?, 0)`
+    ).bind(pseudo, score, total, fp.gained, applied.division, applied.points).run();
 
     return jsonResponse({
       ok: true, base: fp.base, bonus: fp.bonus, gained: fp.gained,
