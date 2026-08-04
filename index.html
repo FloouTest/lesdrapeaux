@@ -21,9 +21,11 @@
   }
   *{box-sizing:border-box;}
   html,body{height:100%;}
+  html{ overflow-x:hidden; }
   body{
     margin:0;
     min-height:100vh;
+    overflow-x:hidden;
     background:
       radial-gradient(circle at 15% 10%, rgba(201,152,47,0.10), transparent 40%),
       radial-gradient(circle at 90% 85%, rgba(47,143,109,0.10), transparent 45%),
@@ -43,6 +45,8 @@
   .stage{
     width:100%;
     max-width:760px;
+    min-width:0;
+    box-sizing:border-box;
   }
   h1,h2,h3{font-family:'Fraunces',serif; margin:0;}
   .brand{
@@ -329,18 +333,28 @@
   .choice-btn.wrong{ background:#FBE6E1; border-color:var(--coral); color:var(--coral); }
   .choice-btn:disabled{ cursor:default; }
 
-  .type-row{ display:flex; gap:10px; }
+  .type-row{ display:flex; gap:10px; min-width:0; }
   .type-input{
-    flex:1; border:1.5px solid var(--line); border-radius:12px; padding:15px 16px;
+    flex:1 1 auto; min-width:0; border:1.5px solid var(--line); border-radius:12px; padding:15px 16px;
     font-family:'Inter',sans-serif; font-size:16px; background:#fff; color:var(--navy);
   }
   .type-input:focus{ outline:none; border-color:var(--navy); }
   .btn-validate{
-    background:var(--teal); color:#fff; border:none; border-radius:12px; padding:0 24px;
-    font-family:'Inter',sans-serif; font-weight:600; font-size:15px; cursor:pointer;
+    flex:0 1 auto; min-width:0; max-width:100%; background:var(--teal); color:#fff; border:none;
+    border-radius:12px; padding:0 24px; font-family:'Inter',sans-serif; font-weight:600;
+    font-size:15px; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
   .btn-validate:hover{ background:#267859; }
   .btn-validate:disabled{ background:#B9B2A0; cursor:not-allowed; }
+  @media (max-width:480px){
+    .type-row{ gap:6px; }
+    .type-input{ flex:1 1 auto; padding:11px 10px; font-size:14.5px; }
+    .btn-validate{ flex:0 0 auto; padding:0 10px; font-size:12px; border-radius:9px; }
+  }
+  @media (max-width:360px){
+    .type-input{ padding:10px 8px; font-size:13.5px; }
+    .btn-validate{ padding:0 8px; font-size:11px; }
+  }
 
   .hint-box{ margin-top:14px; }
   .hint-btn{
@@ -401,6 +415,43 @@
   }
 
   .hidden{ display:none !important; }
+
+  /* ---------- CELEBRATION DE PROMOTION ---------- */
+  .promotion-overlay{
+    position:fixed; inset:0; z-index:999;
+    background:rgba(30,42,60,0.55);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity .25s ease;
+  }
+  .promotion-overlay.show{ opacity:1; pointer-events:auto; }
+  .promotion-confetti{ position:absolute; inset:0; overflow:hidden; }
+  .confetti-piece{
+    position:absolute; top:-20px; width:8px; height:14px; opacity:0.9;
+    animation-name:confetti-fall; animation-timing-function:ease-in; animation-fill-mode:forwards;
+  }
+  @keyframes confetti-fall{
+    0%{ transform:translateY(0) rotate(0deg); opacity:1; }
+    100%{ transform:translateY(110vh) rotate(540deg); opacity:0.4; }
+  }
+  .promotion-card{
+    position:relative; background:#FBF8F0; border:2px solid var(--gold); border-radius:20px;
+    padding:36px 44px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.35);
+    transform:scale(0.6); opacity:0; transition:transform .45s cubic-bezier(.34,1.56,.64,1), opacity .3s ease;
+  }
+  .promotion-overlay.show .promotion-card{ transform:scale(1); opacity:1; }
+  .promotion-icon{ font-size:56px; line-height:1; animation:promotion-bounce 1s ease-in-out .35s 2; }
+  @keyframes promotion-bounce{
+    0%,100%{ transform:translateY(0) scale(1); }
+    30%{ transform:translateY(-14px) scale(1.08); }
+    50%{ transform:translateY(0) scale(1); }
+  }
+  .promotion-title{
+    font-family:'Fraunces',serif; font-weight:700; font-size:22px; color:var(--gold);
+    margin-top:8px; letter-spacing:.02em;
+  }
+  .promotion-tier{ font-family:'Fraunces',serif; font-weight:600; font-size:18px; color:var(--navy); margin-top:4px; }
+  .promotion-sub{ font-size:12.5px; color:var(--ink-soft); margin-top:6px; }
+
 </style>
 </head>
 <body>
@@ -596,6 +647,17 @@
     </div>
   </div>
 
+</div>
+
+<!-- OVERLAY : celebration de promotion de ligue -->
+<div id="promotion-overlay" class="promotion-overlay hidden">
+  <div class="promotion-confetti" id="promotion-confetti"></div>
+  <div class="promotion-card" id="promotion-card">
+    <div class="promotion-icon" id="promotion-icon">🏳️</div>
+    <div class="promotion-title">Promotion !</div>
+    <div class="promotion-tier" id="promotion-tier">Géographe 3</div>
+    <div class="promotion-sub">Nouvelle ligue débloquée</div>
+  </div>
 </div>
 
 <script>
@@ -1177,6 +1239,7 @@ function startQuiz(){
 /* ============ MODE CLASSE : format fixe, Monde entier / 20 drapeaux / QCM ============ */
 function startRankedQuiz(){
   state.ranked = true;
+  state.divisionBeforeGame = currentRankedDivision;
   selectedContinent = 'Monde entier';
   selectedMode = 'saisie';
   const allPairs = allCountryPairs();
@@ -1591,7 +1654,9 @@ function applyRankedGain(division, points, gained){
 }
 
 function todayKey(){
-  return new Date().toISOString().slice(0,10); // YYYY-MM-DD (UTC)
+  // Date du jour a Paris (gere automatiquement heure d'ete/hiver), pas UTC :
+  // le reset quotidien du mode classe se fait donc a minuit heure de Paris.
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' });
 }
 
 /* Repli local (hors API) : suit division/points/serie/limite quotidienne sur cet appareil uniquement */
@@ -1645,6 +1710,8 @@ async function submitRanked(score, total){
   showRankedResult(local);
 }
 
+let currentRankedDivision = 0; // reflete la division actuellement affichee (mise a jour a chaque refresh/partie)
+
 function showRankedResult(r){
   const t = tierForDivision(r.division);
   const el = document.getElementById('result-ranked');
@@ -1661,10 +1728,18 @@ function showRankedResult(r){
       `<div class="ranked-result-delta up">+${r.gained} FP${bonusText}</div>` +
       `<div class="ranked-result-total">${r.points}/${RANKED_POINTS_PER_LEAGUE} FP dans cette ligue · ${Math.max(0, RANKED_DAILY_LIMIT - r.gamesToday)}/${RANKED_DAILY_LIMIT} parties classées restantes aujourd'hui</div>`;
   }
+
+  const before = state.divisionBeforeGame !== undefined && state.divisionBeforeGame !== null
+    ? state.divisionBeforeGame : currentRankedDivision;
+  if(!r.dailyLimitReached && r.division > before){
+    triggerPromotionCelebration(t);
+  }
+
   updateRankedBadge(r.division, r.points, r.streak, r.gamesToday);
 }
 
 function updateRankedBadge(division, points, streak, gamesToday){
+  currentRankedDivision = division;
   const t = tierForDivision(division);
   document.getElementById('ranked-tier-badge').textContent = t.icon;
   document.getElementById('ranked-tier-name').textContent = t.name;
@@ -1689,6 +1764,43 @@ function updateRankedBadge(division, points, streak, gamesToday){
                      : `0/${RANKED_DAILY_LIMIT} partie classée restante aujourd'hui`;
   }
 }
+
+/* Petite celebration (confettis + carte) affichee lors d'un changement de ligue */
+let promotionTimer = null;
+function triggerPromotionCelebration(tier){
+  const overlay = document.getElementById('promotion-overlay');
+  const confettiBox = document.getElementById('promotion-confetti');
+  document.getElementById('promotion-icon').textContent = tier.icon;
+  document.getElementById('promotion-tier').textContent = tier.name;
+
+  confettiBox.innerHTML = '';
+  const colors = ['#C9982F', '#2F8F6D', '#D65B44', '#1E2A3C', '#F3ECDA'];
+  for(let i=0;i<40;i++){
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = `${Math.random()*100}%`;
+    piece.style.background = colors[Math.floor(Math.random()*colors.length)];
+    piece.style.animationDuration = `${1.6 + Math.random()*1.2}s`;
+    piece.style.animationDelay = `${Math.random()*0.4}s`;
+    piece.style.transform = `rotate(${Math.random()*360}deg)`;
+    confettiBox.appendChild(piece);
+  }
+
+  overlay.classList.remove('hidden');
+  requestAnimationFrame(()=>overlay.classList.add('show'));
+
+  if(promotionTimer) clearTimeout(promotionTimer);
+  promotionTimer = setTimeout(closePromotionCelebration, 3200);
+}
+function closePromotionCelebration(){
+  const overlay = document.getElementById('promotion-overlay');
+  overlay.classList.remove('show');
+  setTimeout(()=>overlay.classList.add('hidden'), 300);
+}
+document.getElementById('promotion-overlay').addEventListener('click', ()=>{
+  if(promotionTimer) clearTimeout(promotionTimer);
+  closePromotionCelebration();
+});
 
 async function refreshRankedBadge(){
   let data = null;
