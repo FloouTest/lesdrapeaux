@@ -485,8 +485,9 @@
   <div id="screen-home" class="card hidden">
     <div class="player-badge">
       <span>👋 Salut <strong id="home-pseudo-label">Joueur</strong></span>
-      <div style="display:flex; gap:12px; align-items:center;">
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
         <button type="button" class="leaderboard-btn" id="btn-open-leaderboard">🏆 Classement</button>
+        <button type="button" class="leaderboard-btn" id="btn-open-history">🕐 Historique</button>
         <button type="button" class="change-link" id="btn-change-pseudo">changer de pseudo</button>
       </div>
     </div>
@@ -636,7 +637,6 @@
     <div class="lb-tabs" id="lb-tabs">
       <button type="button" class="lb-tab selected" data-tab="casual">Parties</button>
       <button type="button" class="lb-tab" data-tab="ranked">🏆 Classé</button>
-      <button type="button" class="lb-tab" data-tab="history">🕐 Historique</button>
     </div>
     <div id="lb-casual-panel">
       <div class="lb-filters" id="lb-filters"></div>
@@ -646,10 +646,14 @@
     <div id="lb-ranked-panel" class="hidden">
       <div id="lb-ranked-content"></div>
     </div>
-    <div id="lb-history-panel" class="hidden">
-      <p class="subtitle">Tes 10 dernières parties (classiques et classées), les plus récentes en premier.</p>
-      <div id="lb-history-content"></div>
-    </div>
+  </div>
+
+  <!-- ECRAN 5 : HISTORIQUE -->
+  <div id="screen-history" class="card hidden">
+    <button class="top-link" id="btn-history-back">← Retour</button>
+    <h2 style="font-size:22px; margin-bottom:6px;">🕐 Historique</h2>
+    <p class="subtitle">Tes 10 dernières parties (classiques et classées), les plus récentes en premier.</p>
+    <div id="history-content"></div>
   </div>
 
 </div>
@@ -943,6 +947,7 @@ const screenPicker = document.getElementById('screen-picker');
 const screenQuiz = document.getElementById('screen-quiz');
 const screenResult = document.getElementById('screen-result');
 const screenLeaderboard = document.getElementById('screen-leaderboard');
+const screenHistory = document.getElementById('screen-history');
 
 /* ============ ETAT DU JEU ============ */
 let state = {
@@ -2036,7 +2041,6 @@ function openLeaderboard(fromScreen){
   document.querySelector('.lb-tab[data-tab="casual"]').classList.add('selected');
   document.getElementById('lb-casual-panel').classList.remove('hidden');
   document.getElementById('lb-ranked-panel').classList.add('hidden');
-  document.getElementById('lb-history-panel').classList.add('hidden');
   renderLeaderboard();
 }
 document.getElementById('btn-open-leaderboard').addEventListener('click', ()=>openLeaderboard(screenHome));
@@ -2053,10 +2057,18 @@ document.querySelectorAll('.lb-tab').forEach(tab=>{
     const which = tab.dataset.tab;
     document.getElementById('lb-casual-panel').classList.toggle('hidden', which!=='casual');
     document.getElementById('lb-ranked-panel').classList.toggle('hidden', which!=='ranked');
-    document.getElementById('lb-history-panel').classList.toggle('hidden', which!=='history');
     if(which==='ranked') renderRankedLeaderboard();
-    if(which==='history') renderHistory();
   });
+});
+
+document.getElementById('btn-open-history').addEventListener('click', ()=>{
+  screenHome.classList.add('hidden');
+  screenHistory.classList.remove('hidden');
+  renderHistory();
+});
+document.getElementById('btn-history-back').addEventListener('click', ()=>{
+  screenHistory.classList.add('hidden');
+  screenHome.classList.remove('hidden');
 });
 
 function formatHistoryDate(iso){
@@ -2101,7 +2113,7 @@ async function fetchHistory(pseudo){
 }
 
 async function renderHistory(){
-  const el = document.getElementById('lb-history-content');
+  const el = document.getElementById('history-content');
   el.innerHTML = '<div class="lb-empty">Chargement…</div>';
   const history = await fetchHistory(currentPseudo || 'Joueur');
   if(!history || history.length === 0){
