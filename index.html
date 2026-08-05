@@ -74,7 +74,8 @@
   *{box-sizing:border-box;}
 
   .theme-toggle{
-    position:fixed; top:16px; right:16px; z-index:1000;
+    position:fixed; top:32px; z-index:1000;
+    left:min(calc(50% + 392px), calc(100% - 58px));
     width:42px; height:42px; border-radius:50%;
     background:var(--card-bg); border:1.5px solid var(--line);
     box-shadow:0 4px 12px rgba(30,42,60,0.15);
@@ -83,6 +84,9 @@
     transition:transform .2s ease, background .2s ease;
   }
   .theme-toggle:hover{ transform:scale(1.08); }
+  @media (max-width:860px){
+    .theme-toggle{ left:auto; right:16px; top:16px; }
+  }
   @media (max-width:480px){
     .theme-toggle{ top:10px; right:10px; width:36px; height:36px; font-size:16px; }
   }
