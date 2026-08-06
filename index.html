@@ -313,6 +313,25 @@
     background:none; border:none; color:var(--ink-soft); font-size:12.5px;
     text-decoration:underline; cursor:pointer; font-family:'Inter',sans-serif;
   }
+
+  .streak-widget{
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    background:var(--paper-2); border:1px solid var(--line); border-radius:12px;
+    padding:12px 16px; margin-bottom:18px;
+  }
+  .streak-days{ display:flex; gap:6px; }
+  .streak-day{
+    width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:700; color:var(--ink-soft);
+    background:var(--card-bg); border:1.5px solid var(--line);
+  }
+  .streak-day.played{ background:var(--teal); color:#fff; border-color:var(--teal); }
+  .streak-day.today{ box-shadow:0 0 0 2px var(--gold); }
+  .streak-count{ font-size:12.5px; color:var(--ink-soft); font-weight:600; white-space:nowrap; }
+  @media (max-width:420px){
+    .streak-day{ width:23px; height:23px; font-size:10px; }
+  }
+
   .home-top-row{ display:flex; gap:10px; margin-bottom:6px; }
   .leaderboard-btn{
     background:none; border:1.5px solid var(--gold); color:var(--gold);
@@ -561,6 +580,11 @@
         <button type="button" class="leaderboard-btn" id="btn-open-history">🕐 Historique</button>
         <button type="button" class="change-link" id="btn-change-pseudo">changer de pseudo</button>
       </div>
+    </div>
+
+    <div class="streak-widget">
+      <div class="streak-days" id="weekly-streak-days"></div>
+      <div class="streak-count" id="weekly-streak-count">0/7 jours joués cette semaine</div>
     </div>
 
     <div class="ranked-banner">
@@ -1591,6 +1615,7 @@ function computePoints(score, mistakes, seconds){
 
 function showResult(){
   stopTimer();
+  markTodayPlayed();
   screenQuiz.classList.add('hidden');
   screenResult.classList.remove('hidden');
   const total = state.order.length;
@@ -1738,6 +1763,72 @@ function todayKey(){
   // Date du jour a Paris (gere automatiquement heure d'ete/hiver), pas UTC :
   // le reset quotidien du mode classe se fait donc a minuit heure de Paris.
   return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' });
+}
+
+/* ============ STREAK HEBDOMADAIRE (aucune recompense, juste un suivi des jours joues) ============ */
+/* Calcule le lundi (YYYY-MM-DD) de la semaine contenant la date donnee (YYYY-MM-DD) */
+function mondayOfWeek(dateStr){
+  const [y,m,d] = dateStr.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m-1, d));
+  const dow = dt.getUTCDay(); // 0=dimanche ... 6=samedi
+  const isoDow = dow === 0 ? 7 : dow; // 1=lundi ... 7=dimanche
+  dt.setUTCDate(dt.getUTCDate() - (isoDow - 1));
+  return dt.toISOString().slice(0,10);
+}
+/* Renvoie l'index du jour dans la semaine ISO : 0=lundi ... 6=dimanche */
+function dayIndexInWeek(dateStr){
+  const [y,m,d] = dateStr.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m-1, d));
+  const dow = dt.getUTCDay();
+  const isoDow = dow === 0 ? 7 : dow;
+  return isoDow - 1;
+}
+async function getWeeklyStreak(){
+  const today = todayKey();
+  const monday = mondayOfWeek(today);
+  let state = { weekStart: monday, days: [false,false,false,false,false,false,false] };
+  try{
+    const raw = await storeGet('weekly_streak', false);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      // Si on est toujours dans la meme semaine, on garde l'etat ; sinon on repart a zero
+      // (c'est le reset hebdomadaire demande : chaque nouvelle semaine efface la precedente).
+      if(parsed.weekStart === monday && Array.isArray(parsed.days) && parsed.days.length === 7){
+        state = parsed;
+      }
+    }
+  }catch(e){}
+  return state;
+}
+function renderWeeklyStreakFromState(state){
+  const labels = ['L','M','M','J','V','S','D'];
+  const todayIdx = dayIndexInWeek(todayKey());
+  const el = document.getElementById('weekly-streak-days');
+  if(!el) return;
+  el.innerHTML = '';
+  let count = 0;
+  state.days.forEach((played,i)=>{
+    if(played) count++;
+    const dot = document.createElement('div');
+    dot.className = 'streak-day' + (played ? ' played' : '') + (i===todayIdx ? ' today' : '');
+    dot.textContent = labels[i];
+    dot.title = played ? 'Partie jouée' : 'Pas encore joué';
+    el.appendChild(dot);
+  });
+  document.getElementById('weekly-streak-count').textContent = `${count}/7 jours joués cette semaine`;
+}
+async function renderWeeklyStreak(){
+  const state = await getWeeklyStreak();
+  renderWeeklyStreakFromState(state);
+}
+async function markTodayPlayed(){
+  const state = await getWeeklyStreak();
+  const idx = dayIndexInWeek(todayKey());
+  if(!state.days[idx]){
+    state.days[idx] = true;
+    try{ await storeSet('weekly_streak', JSON.stringify(state), false); }catch(e){}
+  }
+  renderWeeklyStreakFromState(state);
 }
 
 /* Repli local (hors API) : suit division/points/serie/limite quotidienne sur cet appareil uniquement */
@@ -1968,6 +2059,7 @@ async function initPlayer(){
     setTimeout(()=>document.getElementById('pseudo-input').focus(), 50);
   }
   refreshRankedBadge();
+  renderWeeklyStreak();
 }
 async function savePseudo(){
   const input = document.getElementById('pseudo-input');
