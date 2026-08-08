@@ -491,6 +491,32 @@
   .summary-icon{ flex:none; font-size:15px; }
   .summary-name{ font-weight:600; color:var(--ink); flex:1; min-width:120px; }
   .summary-answer{ color:var(--ink-soft); font-size:12.5px; }
+  .summary-flag{
+    flex:none; width:32px; height:21px; object-fit:cover; border-radius:3px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.25); background:#4B5563;
+  }
+
+  .history-row{
+    display:flex; align-items:center; gap:10px; padding:10px 12px;
+    border-radius:10px; border:1px solid var(--line); background:var(--paper-2);
+    cursor:pointer; margin-bottom:8px; transition:background .15s ease;
+  }
+  .history-row:hover{ background:var(--card-bg); }
+  .history-row .hr-date{ font-size:12px; color:var(--ink-soft); width:110px; flex:none; }
+  .history-row .hr-label{ flex:1; font-size:13.5px; font-weight:600; color:var(--ink); }
+  .history-row .hr-mode{ font-size:12px; color:var(--ink-soft); width:90px; flex:none; }
+  .history-row .hr-score{ font-size:13px; font-weight:700; color:var(--ink); width:50px; flex:none; text-align:right; }
+  .history-row .hr-points{ font-size:12.5px; color:var(--ink-soft); width:110px; flex:none; text-align:right; }
+  .history-row .hr-caret{ flex:none; font-size:11px; color:var(--ink-soft); transition:transform .2s ease; }
+  .history-row.open .hr-caret{ transform:rotate(90deg); }
+  .history-detail{ margin:-4px 0 10px; padding:2px 4px 4px; display:none; flex-direction:column; gap:6px; }
+  .history-detail.open{ display:flex; }
+  .history-empty-detail{ font-size:12.5px; color:var(--ink-soft); padding:6px 12px; }
+  @media (max-width:600px){
+    .history-row{ flex-wrap:wrap; }
+    .history-row .hr-date{ width:auto; }
+    .history-row .hr-mode{ width:auto; }
+  }
   .btn-ghost{
     background:transparent; border:1.5px solid var(--ink); color:var(--ink);
     border-radius:999px; padding:13px 26px; font-family:'Inter',sans-serif; font-weight:600;
@@ -977,6 +1003,10 @@ const DATA = {
 const CONTINENT_OF = {};
 Object.keys(DATA).forEach(cont=>{
   DATA[cont].forEach(([name])=>{ CONTINENT_OF[name] = cont; });
+});
+const FLAG_URL_OF = {};
+Object.keys(DATA).forEach(cont=>{
+  DATA[cont].forEach(([name, url])=>{ FLAG_URL_OF[name] = url; });
 });
 
 /* ============ DIFFICULTE DES QCM : proximite geographique + drapeaux qui se ressemblent ============ */
@@ -1648,9 +1678,36 @@ function showResult(){
       seconds: state.elapsedSeconds,
       points: points,
       flagCount: state.flagCount || null,
+      details: state.answersLog,
       date: new Date().toISOString()
     });
   }
+}
+
+function buildAnswerRow(entry){
+  const row = document.createElement('div');
+  row.className = 'summary-row ' + (entry.correct ? 'ok' : 'ko');
+  const img = document.createElement('img');
+  img.className = 'summary-flag';
+  img.src = FLAG_URL_OF[entry.name] || '';
+  img.alt = entry.name;
+  img.onerror = function(){ this.style.visibility = 'hidden'; };
+  row.appendChild(img);
+  const icon = document.createElement('span');
+  icon.className = 'summary-icon';
+  icon.textContent = entry.correct ? '✅' : '❌';
+  row.appendChild(icon);
+  const name = document.createElement('span');
+  name.className = 'summary-name';
+  name.textContent = entry.name;
+  row.appendChild(name);
+  if(!entry.correct){
+    const answer = document.createElement('span');
+    answer.className = 'summary-answer';
+    answer.textContent = `toi : ${entry.userAnswer}`;
+    row.appendChild(answer);
+  }
+  return row;
 }
 
 function renderAnswersSummary(){
@@ -1661,23 +1718,7 @@ function renderAnswersSummary(){
   toggleBtn.textContent = '📋 Voir le résumé des réponses';
 
   state.answersLog.forEach(entry=>{
-    const row = document.createElement('div');
-    row.className = 'summary-row ' + (entry.correct ? 'ok' : 'ko');
-    const icon = document.createElement('span');
-    icon.className = 'summary-icon';
-    icon.textContent = entry.correct ? '✅' : '❌';
-    const name = document.createElement('span');
-    name.className = 'summary-name';
-    name.textContent = entry.name;
-    row.appendChild(icon);
-    row.appendChild(name);
-    if(!entry.correct){
-      const answer = document.createElement('span');
-      answer.className = 'summary-answer';
-      answer.textContent = `toi : ${entry.userAnswer}`;
-      row.appendChild(answer);
-    }
-    box.appendChild(row);
+    box.appendChild(buildAnswerRow(entry));
   });
 }
 
@@ -1857,7 +1898,7 @@ async function computeLocalRankedGain(score, total){
     await storeSet('ranked_local', JSON.stringify(local), false);
     await appendLocalRankedHistory({
       created_at: new Date().toISOString(), type:'ranked', label:'Classé', mode:'saisie',
-      score, total, points:0, division:local.division, daily_limit_reached:1
+      score, total, points:0, division:local.division, daily_limit_reached:1, details: state.answersLog
     });
     return { base:0, bonus:0, gained:0, division:local.division, points:local.points,
       streak:local.streak, dailyLimitReached:true, gamesToday:local.gamesToday };
@@ -1872,7 +1913,7 @@ async function computeLocalRankedGain(score, total){
   await storeSet('ranked_local', JSON.stringify(local), false);
   await appendLocalRankedHistory({
     created_at: new Date().toISOString(), type:'ranked', label:'Classé', mode:'saisie',
-    score, total, points:fp.gained, division:applied.division, daily_limit_reached:0
+    score, total, points:fp.gained, division:applied.division, daily_limit_reached:0, details: state.answersLog
   });
 
   return { base:fp.base, bonus:fp.bonus, gained:fp.gained, division:local.division, points:local.points,
@@ -1883,8 +1924,9 @@ async function submitRanked(score, total){
   try{
     const res = await fetch('/api/ranked', {
       method: 'POST',
+      cache: 'no-store',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pseudo: currentPseudo || 'Joueur', score, total })
+      body: JSON.stringify({ pseudo: currentPseudo || 'Joueur', score, total, details: state.answersLog })
     });
     if(res.ok){
       const data = await res.json();
@@ -1995,7 +2037,7 @@ document.getElementById('promotion-overlay').addEventListener('click', ()=>{
 async function refreshRankedBadge(){
   let data = null;
   try{
-    const res = await fetch('/api/ranked/player?pseudo=' + encodeURIComponent(currentPseudo || 'Joueur'));
+    const res = await fetch('/api/ranked/player?pseudo=' + encodeURIComponent(currentPseudo || 'Joueur'), { cache: 'no-store' });
     if(res.ok){
       const json = await res.json();
       if(json && json.ok) data = json;
@@ -2261,7 +2303,7 @@ async function fetchHistory(pseudo){
       const list = JSON.parse(raw).filter(e=>e.pseudo === pseudo);
       list.forEach(e=>local.push({
         created_at: e.date, type:'casual', label: e.continent, mode: e.mode,
-        score: e.score, total: e.total, points: e.points, division: null
+        score: e.score, total: e.total, points: e.points, division: null, details: e.details
       }));
     }
   }catch(e){}
@@ -2275,6 +2317,14 @@ async function fetchHistory(pseudo){
   return local.slice(0,10);
 }
 
+function parseHistoryDetails(e){
+  if(Array.isArray(e.details)) return e.details;
+  if(typeof e.details === 'string' && e.details.length){
+    try{ const parsed = JSON.parse(e.details); if(Array.isArray(parsed)) return parsed; }catch(err){}
+  }
+  return null;
+}
+
 async function renderHistory(){
   const el = document.getElementById('history-content');
   el.innerHTML = '<div class="lb-empty">Chargement…</div>';
@@ -2283,24 +2333,44 @@ async function renderHistory(){
     el.innerHTML = "<div class=\"lb-empty\">Aucune partie enregistrée pour l'instant. Termine un quiz pour apparaître ici !</div>";
     return;
   }
-  let html = '<table class="lb-table"><thead><tr>' +
-    '<th>Date</th><th>Catégorie</th><th>Mode</th><th>Score</th><th>Points</th>' +
-    '</tr></thead><tbody>';
-  history.forEach(e=>{
+  el.innerHTML = '';
+  history.forEach((e, idx)=>{
     const isRanked = e.type === 'ranked';
     const modeLabel = isRanked ? 'Classé · Saisie' : (e.mode==='qcm' ? '4 réponses' : 'Saisie');
-    const label = isRanked ? '🏆 Classé' : escapeHtml(e.label || '');
+    const label = isRanked ? '🏆 Classé' : (e.label || '');
     const pointsLabel = isRanked ? `${e.points >= 0 ? '+' : ''}${e.points} FP${e.daily_limit_reached ? ' (limite atteinte)' : ''}` : `${e.points ?? 0} pts`;
-    html += `<tr>` +
-      `<td>${formatHistoryDate(e.created_at)}</td>` +
-      `<td>${label}</td>` +
-      `<td>${modeLabel}</td>` +
-      `<td>${e.score}/${e.total}</td>` +
-      `<td>${pointsLabel}</td>` +
-      `</tr>`;
+
+    const row = document.createElement('div');
+    row.className = 'history-row';
+    row.innerHTML =
+      `<span class="hr-caret">▶</span>` +
+      `<span class="hr-date">${formatHistoryDate(e.created_at)}</span>` +
+      `<span class="hr-label">${escapeHtml(label)}</span>` +
+      `<span class="hr-mode">${modeLabel}</span>` +
+      `<span class="hr-score">${e.score}/${e.total}</span>` +
+      `<span class="hr-points">${pointsLabel}</span>`;
+
+    const detail = document.createElement('div');
+    detail.className = 'history-detail';
+    const flags = parseHistoryDetails(e);
+    if(flags && flags.length){
+      flags.forEach(entry=>detail.appendChild(buildAnswerRow(entry)));
+    } else {
+      const empty = document.createElement('div');
+      empty.className = 'history-empty-detail';
+      empty.textContent = "Détail des drapeaux non disponible pour cette partie.";
+      detail.appendChild(empty);
+    }
+
+    row.addEventListener('click', ()=>{
+      const willOpen = !row.classList.contains('open');
+      row.classList.toggle('open', willOpen);
+      detail.classList.toggle('open', willOpen);
+    });
+
+    el.appendChild(row);
+    el.appendChild(detail);
   });
-  html += '</tbody></table>';
-  el.innerHTML = html;
 }
 
 async function renderRankedLeaderboard(){
