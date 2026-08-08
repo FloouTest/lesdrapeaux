@@ -8,7 +8,10 @@ export const DEFAULT_DAILY_LIMIT = 5;
 export function jsonResponse(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json; charset=utf-8" },
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+    },
   });
 }
 
@@ -19,7 +22,9 @@ export function clampInt(value, min, max) {
 }
 
 export function todayKey() {
-  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+  // Date du jour a Paris (gere automatiquement heure d'ete/hiver), pas UTC :
+  // le reset quotidien du mode classe se fait donc a minuit heure de Paris.
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' });
 }
 
 // Barème du bonus de serie : le bonus ne commence qu'a partir de la 2e victoire d'affilee,
