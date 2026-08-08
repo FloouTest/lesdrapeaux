@@ -13,7 +13,10 @@ const ALLOWED_FLAG_COUNTS = new Set([10, 20, 30]);
 function jsonResponse(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json; charset=utf-8" },
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+    },
   });
 }
 
@@ -24,7 +27,7 @@ export async function onRequestGet({ request, env }) {
     const flagCountParam = url.searchParams.get("flagCount");
 
     let query =
-      "SELECT pseudo, continent, mode, score, total, mistakes, seconds, points, flag_count AS flagCount, created_at " +
+      "SELECT pseudo, continent, mode, score, total, mistakes, seconds, points, flag_count AS flagCount, details, created_at " +
       "FROM leaderboard";
     const conditions = [];
     const params = [];
@@ -81,6 +84,11 @@ export async function onRequestPost({ request, env }) {
       if (ALLOWED_FLAG_COUNTS.has(n)) flagCount = n;
     }
 
+    let details = null;
+    if (Array.isArray(body.details)) {
+      details = JSON.stringify(body.details.slice(0, 60)).slice(0, 8000);
+    }
+
     if (!continent) {
       return jsonResponse({ ok: false, error: "Catégorie manquante." }, 400);
     }
@@ -89,10 +97,10 @@ export async function onRequestPost({ request, env }) {
     }
 
     await env.DB.prepare(
-      `INSERT INTO leaderboard (pseudo, continent, mode, score, total, mistakes, seconds, points, flag_count)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO leaderboard (pseudo, continent, mode, score, total, mistakes, seconds, points, flag_count, details)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
-      .bind(pseudo, continent, mode, score, total, mistakes, seconds, points, flagCount)
+      .bind(pseudo, continent, mode, score, total, mistakes, seconds, points, flagCount, details)
       .run();
 
     return jsonResponse({ ok: true });

@@ -9,7 +9,10 @@
 function jsonResponse(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json; charset=utf-8" },
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+    },
   });
 }
 
@@ -21,11 +24,11 @@ export async function onRequestGet({ request, env }) {
 
     const { results } = await env.DB.prepare(
       `SELECT created_at, 'casual' AS type, continent AS label, mode, score, total, points,
-              NULL AS division, 0 AS daily_limit_reached
+              NULL AS division, 0 AS daily_limit_reached, details
        FROM leaderboard WHERE pseudo = ?
        UNION ALL
        SELECT created_at, 'ranked' AS type, 'Classé' AS label, 'saisie' AS mode, score, total,
-              gained AS points, division_after AS division, daily_limit_reached
+              gained AS points, division_after AS division, daily_limit_reached, details
        FROM ranked_history WHERE pseudo = ?
        ORDER BY created_at DESC
        LIMIT 10`
