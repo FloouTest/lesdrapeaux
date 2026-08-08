@@ -1734,7 +1734,18 @@ document.getElementById('btn-replay').addEventListener('click', ()=>{
   if(state.ranked){ startRankedQuiz(); } else { startQuiz(); }
 });
 document.getElementById('btn-home').addEventListener('click', backHome);
-document.getElementById('btn-quit').addEventListener('click', ()=>{ stopTimer(); backHome(); });
+document.getElementById('btn-quit').addEventListener('click', async ()=>{
+  if(state.ranked){
+    const confirmed = confirm("Quitter maintenant comptera comme une partie classée utilisée aujourd'hui (avec le score déjà obtenu, sans bonus de série). Continuer ?");
+    if(!confirmed) return;
+    stopTimer();
+    await forfeitRankedGame();
+    backHome();
+    return;
+  }
+  stopTimer();
+  backHome();
+});
 
 function backHome(){
   screenQuiz.classList.add('hidden');
@@ -1891,6 +1902,7 @@ async function computeLocalRankedGain(score, total){
   }
   if(local.gamesTodayDate !== todayKey()){
     local.gamesToday = 0;
+    local.streak = 0;
     local.gamesTodayDate = todayKey();
   }
 
@@ -1940,6 +1952,26 @@ async function submitRanked(score, total){
 
   const local = await computeLocalRankedGain(score, total);
   showRankedResult(local);
+}
+
+/* Abandon d'une partie classée en cours : compte comme une partie utilisée aujourd'hui
+   (avec le score obtenu jusque-la, donc tres probablement 0 FP et serie cassee), pour
+   empecher de recommencer indefiniment sans consequence. */
+async function forfeitRankedGame(){
+  const total = state.order.length || 20;
+  const score = state.score;
+  try{
+    const res = await fetch('/api/ranked', {
+      method: 'POST',
+      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pseudo: currentPseudo || 'Joueur', score, total, details: state.answersLog })
+    });
+    if(!res.ok) throw new Error('api indisponible');
+  }catch(e){
+    try{ await computeLocalRankedGain(score, total); }catch(err){}
+  }
+  refreshRankedBadge();
 }
 
 let currentRankedDivision = 0; // reflete la division actuellement affichee (mise a jour a chaque refresh/partie)
@@ -2047,6 +2079,10 @@ async function refreshRankedBadge(){
     const raw = await storeGet('ranked_local', false);
     if(raw){
       try{ data = JSON.parse(raw); }catch(e){}
+    }
+    if(data && data.gamesTodayDate && data.gamesTodayDate !== todayKey()){
+      data.gamesToday = 0;
+      data.streak = 0;
     }
   }
   if(data && data.dailyLimit) RANKED_DAILY_LIMIT = data.dailyLimit;
