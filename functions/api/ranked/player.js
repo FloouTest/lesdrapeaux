@@ -14,14 +14,16 @@ export async function onRequestGet({ request, env }) {
     ).bind(pseudo).first();
 
     const today = todayKey();
-    const gamesToday = row && row.games_today_date === today ? row.games_today : 0;
+    const sameDay = row && row.games_today_date === today;
+    const gamesToday = sameDay ? row.games_today : 0;
+    const streak = sameDay ? row.streak : 0;
     const dailyLimit = await getDailyLimit(env);
 
     return jsonResponse({
       ok: true,
       division: row ? row.division : 0,
       points: row ? row.points : 0,
-      streak: row ? row.streak : 0,
+      streak,
       games_played: row ? row.games_played : 0,
       games_today: gamesToday,
       dailyLimit,

@@ -21,6 +21,11 @@ export async function onRequestPost({ request, env }) {
     const today = todayKey();
     const dailyLimit = await getDailyLimit(env);
 
+    let details = null;
+    if (Array.isArray(body.details)) {
+      details = JSON.stringify(body.details.slice(0, 30)).slice(0, 8000);
+    }
+
     let row = await env.DB.prepare(
       "SELECT division, points, streak, games_played, games_today, games_today_date FROM players WHERE pseudo = ?"
     ).bind(pseudo).first();
@@ -30,6 +35,8 @@ export async function onRequestPost({ request, env }) {
     }
 
     let gamesToday = row.games_today_date === today ? row.games_today : 0;
+    // La serie ne se reporte pas d'un jour a l'autre : meme reset que le compteur quotidien.
+    const effectiveStreak = row.games_today_date === today ? row.streak : 0;
 
     if (gamesToday >= dailyLimit) {
       // Limite quotidienne atteinte : partie jouable mais aucun FP, aucun changement d'etat.
@@ -37,24 +44,25 @@ export async function onRequestPost({ request, env }) {
         `INSERT INTO players (pseudo, division, points, streak, games_played, games_today, games_today_date, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
          ON CONFLICT(pseudo) DO UPDATE SET
+           streak = excluded.streak,
            games_today = excluded.games_today,
            games_today_date = excluded.games_today_date,
            updated_at = datetime('now')`
-      ).bind(pseudo, row.division, row.points, row.streak, row.games_played, gamesToday, today).run();
+      ).bind(pseudo, row.division, row.points, effectiveStreak, row.games_played, gamesToday, today).run();
 
       await env.DB.prepare(
-        `INSERT INTO ranked_history (pseudo, score, total, gained, division_after, points_after, daily_limit_reached)
-         VALUES (?, ?, ?, 0, ?, ?, 1)`
-      ).bind(pseudo, score, total, row.division, row.points).run();
+        `INSERT INTO ranked_history (pseudo, score, total, gained, division_after, points_after, daily_limit_reached, details)
+         VALUES (?, ?, ?, 0, ?, ?, 1, ?)`
+      ).bind(pseudo, score, total, row.division, row.points, details).run();
 
       return jsonResponse({
         ok: true, base: 0, bonus: 0, gained: 0,
-        division: row.division, points: row.points, streak: row.streak,
+        division: row.division, points: row.points, streak: effectiveStreak,
         dailyLimitReached: true, gamesToday, dailyLimit,
       });
     }
 
-    const fp = computeFpGain(score, total, row.streak);
+    const fp = computeFpGain(score, total, effectiveStreak);
     const applied = applyRankedGain(row.division, row.points, fp.gained);
     gamesToday += 1;
     const gamesPlayed = row.games_played + 1;
@@ -73,9 +81,9 @@ export async function onRequestPost({ request, env }) {
     ).bind(pseudo, applied.division, applied.points, fp.newStreak, gamesPlayed, gamesToday, today).run();
 
     await env.DB.prepare(
-      `INSERT INTO ranked_history (pseudo, score, total, gained, division_after, points_after, daily_limit_reached)
-       VALUES (?, ?, ?, ?, ?, ?, 0)`
-    ).bind(pseudo, score, total, fp.gained, applied.division, applied.points).run();
+      `INSERT INTO ranked_history (pseudo, score, total, gained, division_after, points_after, daily_limit_reached, details)
+       VALUES (?, ?, ?, ?, ?, ?, 0, ?)`
+    ).bind(pseudo, score, total, fp.gained, applied.division, applied.points, details).run();
 
     return jsonResponse({
       ok: true, base: fp.base, bonus: fp.bonus, gained: fp.gained,
