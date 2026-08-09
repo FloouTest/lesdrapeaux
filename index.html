@@ -299,6 +299,10 @@
 
   /* ---------- ECRAN PSEUDO ---------- */
   .pseudo-row{ display:flex; gap:10px; margin-top:18px; }
+  .msg-error{
+    margin-top:10px; font-size:13px; color:var(--coral); background:var(--state-coral-bg);
+    border:1px solid var(--coral); border-radius:8px; padding:8px 12px;
+  }
   .pseudo-input{
     flex:1; border:1.5px solid var(--line); border-radius:12px; padding:14px 16px;
     font-family:'Inter',sans-serif; font-size:16px; background:var(--input-bg); color:var(--ink);
@@ -590,10 +594,25 @@
   <!-- ECRAN 0 : PSEUDO -->
   <div id="screen-pseudo" class="card hidden">
     <h2 style="font-size:22px; margin-bottom:6px;">Bienvenue dans l'Atlas des Drapeaux 🌍</h2>
-    <p class="subtitle">Choisis un pseudo pour apparaître dans le classement.</p>
-    <div class="pseudo-row">
-      <input type="text" id="pseudo-input" class="pseudo-input" placeholder="Ton pseudo…" maxlength="20" autocomplete="off">
-      <button type="button" class="btn-primary" id="btn-pseudo-save">C'est parti !</button>
+    <p class="subtitle" id="pseudo-step1-subtitle">Choisis un pseudo pour apparaître dans le classement.</p>
+
+    <div id="pseudo-step1">
+      <div class="pseudo-row">
+        <input type="text" id="pseudo-input" class="pseudo-input" placeholder="Ton pseudo…" maxlength="20" autocomplete="off">
+        <button type="button" class="btn-primary" id="btn-pseudo-next">Continuer</button>
+      </div>
+      <div id="pseudo-step1-msg" class="msg-error hidden"></div>
+    </div>
+
+    <div id="pseudo-step2" class="hidden">
+      <p class="subtitle" id="pseudo-step2-subtitle">Entre ton mot de passe.</p>
+      <div class="pseudo-row">
+        <input type="password" id="pseudo-password-input" class="pseudo-input" placeholder="Mot de passe (4 caractères min.)" autocomplete="off">
+        <button type="button" class="btn-primary" id="btn-pseudo-confirm">Valider</button>
+      </div>
+      <input type="password" id="pseudo-password-confirm" class="pseudo-input hidden" placeholder="Confirme le mot de passe" autocomplete="off" style="margin-top:10px; width:100%;">
+      <div id="pseudo-step2-msg" class="msg-error hidden"></div>
+      <button type="button" class="change-link" id="btn-pseudo-back" style="margin-top:10px;">← Choisir un autre pseudo</button>
     </div>
   </div>
 
@@ -2123,6 +2142,8 @@ async function storeSet(key, value, shared){
 }
 
 let currentPseudo = null;
+let pendingPseudo = null;
+let pendingHasPassword = false;
 
 async function initPlayer(){
   const saved = await storeGet('pseudo', false);
@@ -2134,28 +2155,144 @@ async function initPlayer(){
   } else {
     screenHome.classList.add('hidden');
     screenPseudo.classList.remove('hidden');
+    showPseudoStep1();
     setTimeout(()=>document.getElementById('pseudo-input').focus(), 50);
   }
   refreshRankedBadge();
   renderWeeklyStreak();
 }
-async function savePseudo(){
+
+function showPseudoStep1(){
+  document.getElementById('pseudo-step1').classList.remove('hidden');
+  document.getElementById('pseudo-step2').classList.add('hidden');
+  document.getElementById('pseudo-step1-msg').classList.add('hidden');
+  document.getElementById('pseudo-step2-msg').classList.add('hidden');
+  document.getElementById('pseudo-password-input').value = '';
+  document.getElementById('pseudo-password-confirm').value = '';
+}
+
+function showMsgEl(id, text){
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.classList.remove('hidden');
+}
+
+/* Etape 1 : on verifie auprès du serveur si ce pseudo a deja un mot de passe.
+   Si l'API n'est pas disponible (test local/hors ligne), on repli sur l'ancien
+   comportement sans mot de passe, pour ne jamais bloquer le jeu. */
+async function checkPseudoStatus(){
   const input = document.getElementById('pseudo-input');
   const val = input.value.trim();
-  if(!val) { input.focus(); return; }
-  currentPseudo = val.slice(0,20);
+  const msg = document.getElementById('pseudo-step1-msg');
+  msg.classList.add('hidden');
+  if(!val){ input.focus(); return; }
+  pendingPseudo = val.slice(0,20);
+
+  try{
+    const res = await fetch('/api/account/status', {
+      method:'POST', cache:'no-store',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ pseudo: pendingPseudo })
+    });
+    if(res.ok){
+      const data = await res.json();
+      if(data && data.ok){
+        pendingHasPassword = !!data.hasPassword;
+        showPseudoStep2();
+        return;
+      }
+    }
+    throw new Error('reponse invalide');
+  }catch(e){
+    // API indisponible -> on garde l'ancien comportement (pas de mot de passe exige)
+    await finalizePseudo(pendingPseudo);
+  }
+}
+
+function showPseudoStep2(){
+  document.getElementById('pseudo-step1').classList.add('hidden');
+  document.getElementById('pseudo-step2').classList.remove('hidden');
+  const confirmField = document.getElementById('pseudo-password-confirm');
+  const subtitle = document.getElementById('pseudo-step2-subtitle');
+  const btn = document.getElementById('btn-pseudo-confirm');
+  if(pendingHasPassword){
+    subtitle.textContent = `Ce pseudo est déjà utilisé — entre son mot de passe pour continuer.`;
+    confirmField.classList.add('hidden');
+    btn.textContent = 'Se connecter';
+  } else {
+    subtitle.textContent = `Ce pseudo est libre : choisis un mot de passe pour le protéger.`;
+    confirmField.classList.remove('hidden');
+    btn.textContent = 'Créer mon pseudo';
+  }
+  document.getElementById('pseudo-step2-msg').classList.add('hidden');
+  setTimeout(()=>document.getElementById('pseudo-password-input').focus(), 50);
+}
+
+async function submitPseudoPassword(){
+  const msg = document.getElementById('pseudo-step2-msg');
+  msg.classList.add('hidden');
+  const password = document.getElementById('pseudo-password-input').value;
+
+  if(pendingHasPassword){
+    if(!password){ showMsgEl('pseudo-step2-msg','Entre ton mot de passe.'); return; }
+    try{
+      const res = await fetch('/api/account/login', {
+        method:'POST', cache:'no-store',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ pseudo: pendingPseudo, password })
+      });
+      const data = await res.json();
+      if(res.ok && data.ok){
+        await finalizePseudo(pendingPseudo);
+      } else {
+        showMsgEl('pseudo-step2-msg', data.error || 'Mot de passe incorrect.');
+      }
+    }catch(e){
+      showMsgEl('pseudo-step2-msg', 'Erreur réseau — réessaie.');
+    }
+  } else {
+    const confirmPwd = document.getElementById('pseudo-password-confirm').value;
+    if(password.length < 4){ showMsgEl('pseudo-step2-msg','Le mot de passe doit contenir au moins 4 caractères.'); return; }
+    if(password !== confirmPwd){ showMsgEl('pseudo-step2-msg','Les deux mots de passe ne correspondent pas.'); return; }
+    try{
+      const res = await fetch('/api/account/claim', {
+        method:'POST', cache:'no-store',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ pseudo: pendingPseudo, password })
+      });
+      const data = await res.json();
+      if(res.ok && data.ok){
+        await finalizePseudo(pendingPseudo);
+      } else {
+        showMsgEl('pseudo-step2-msg', data.error || 'Erreur lors de la création du pseudo.');
+      }
+    }catch(e){
+      showMsgEl('pseudo-step2-msg', 'Erreur réseau — réessaie.');
+    }
+  }
+}
+
+async function finalizePseudo(pseudo){
+  currentPseudo = pseudo;
   await storeSet('pseudo', currentPseudo, false);
   document.getElementById('home-pseudo-label').textContent = currentPseudo;
   screenPseudo.classList.add('hidden');
   screenHome.classList.remove('hidden');
   refreshRankedBadge();
 }
-document.getElementById('btn-pseudo-save').addEventListener('click', savePseudo);
-document.getElementById('pseudo-input').addEventListener('keydown', e=>{ if(e.key==='Enter') savePseudo(); });
+
+document.getElementById('btn-pseudo-next').addEventListener('click', checkPseudoStatus);
+document.getElementById('pseudo-input').addEventListener('keydown', e=>{ if(e.key==='Enter') checkPseudoStatus(); });
+document.getElementById('btn-pseudo-confirm').addEventListener('click', submitPseudoPassword);
+document.getElementById('pseudo-password-input').addEventListener('keydown', e=>{ if(e.key==='Enter') submitPseudoPassword(); });
+document.getElementById('pseudo-password-confirm').addEventListener('keydown', e=>{ if(e.key==='Enter') submitPseudoPassword(); });
+document.getElementById('btn-pseudo-back').addEventListener('click', showPseudoStep1);
+
 document.getElementById('btn-change-pseudo').addEventListener('click', ()=>{
-  document.getElementById('pseudo-input').value = currentPseudo || '';
+  document.getElementById('pseudo-input').value = '';
   screenHome.classList.add('hidden');
   screenPseudo.classList.remove('hidden');
+  showPseudoStep1();
   setTimeout(()=>document.getElementById('pseudo-input').focus(), 50);
 });
 
