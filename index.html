@@ -1032,6 +1032,15 @@ Object.keys(DATA).forEach(cont=>{
   DATA[cont].forEach(([name, url])=>{ FLAG_URL_OF[name] = url; });
 });
 
+/* Tire un pays au hasard par continent a chaque chargement de page, pour varier
+   le petit drapeau affiche a cote du nom du continent (tuiles accueil + picker). */
+const CONTINENT_RANDOM_FLAG = {};
+Object.keys(DATA).forEach(cont=>{
+  const arr = DATA[cont];
+  const pick = arr[Math.floor(Math.random()*arr.length)];
+  CONTINENT_RANDOM_FLAG[cont] = pick[0];
+});
+
 /* ============ DIFFICULTE DES QCM : proximite geographique + drapeaux qui se ressemblent ============ */
 const SUBREGION_OF = {"Algérie": "Afrique du Nord", "Égypte": "Afrique du Nord", "Libye": "Afrique du Nord", "Maroc": "Afrique du Nord", "Soudan": "Afrique du Nord", "Tunisie": "Afrique du Nord", "Bénin": "Afrique de l'Ouest", "Burkina Faso": "Afrique de l'Ouest", "Cap-Vert": "Afrique de l'Ouest", "Côte d'Ivoire": "Afrique de l'Ouest", "Gambie": "Afrique de l'Ouest", "Ghana": "Afrique de l'Ouest", "Guinée": "Afrique de l'Ouest", "Guinée-Bissau": "Afrique de l'Ouest", "Liberia": "Afrique de l'Ouest", "Mali": "Afrique de l'Ouest", "Mauritanie": "Afrique de l'Ouest", "Niger": "Afrique de l'Ouest", "Nigeria": "Afrique de l'Ouest", "Sénégal": "Afrique de l'Ouest", "Sierra Leone": "Afrique de l'Ouest", "Togo": "Afrique de l'Ouest", "Angola": "Afrique centrale", "Cameroun": "Afrique centrale", "Congo": "Afrique centrale", "République centrafricaine": "Afrique centrale", "République démocratique du Congo": "Afrique centrale", "Gabon": "Afrique centrale", "Guinée équatoriale": "Afrique centrale", "Sao Tomé-et-Principe": "Afrique centrale", "Tchad": "Afrique centrale", "Burundi": "Afrique de l'Est", "Comores": "Afrique de l'Est", "Djibouti": "Afrique de l'Est", "Érythrée": "Afrique de l'Est", "Éthiopie": "Afrique de l'Est", "Kenya": "Afrique de l'Est", "Madagascar": "Afrique de l'Est", "Malawi": "Afrique de l'Est", "Maurice": "Afrique de l'Est", "Mozambique": "Afrique de l'Est", "Ouganda": "Afrique de l'Est", "Rwanda": "Afrique de l'Est", "Seychelles": "Afrique de l'Est", "Somalie": "Afrique de l'Est", "Soudan du Sud": "Afrique de l'Est", "Tanzanie": "Afrique de l'Est", "Afrique du Sud": "Afrique australe", "Botswana": "Afrique australe", "Lesotho": "Afrique australe", "Namibie": "Afrique australe", "Swaziland": "Afrique australe", "Zambie": "Afrique australe", "Zimbabwe": "Afrique australe", "Canada": "Amérique du Nord", "États-Unis": "Amérique du Nord", "Mexique": "Amérique du Nord", "Belize": "Amérique centrale", "Costa Rica": "Amérique centrale", "Guatemala": "Amérique centrale", "Honduras": "Amérique centrale", "Nicaragua": "Amérique centrale", "Panama": "Amérique centrale", "Salvador": "Amérique centrale", "Antigua-et-Barbuda": "Caraïbes", "Bahamas": "Caraïbes", "Barbade": "Caraïbes", "Cuba": "Caraïbes", "Dominique": "Caraïbes", "Grenade": "Caraïbes", "Haïti": "Caraïbes", "Jamaïque": "Caraïbes", "République dominicaine": "Caraïbes", "Saint-Christophe-et-Niévès": "Caraïbes", "Sainte-Lucie": "Caraïbes", "Saint-Vincent-et-les Grenadines": "Caraïbes", "Trinité-et-Tobago": "Caraïbes", "Argentine": "Amérique du Sud", "Bolivie": "Amérique du Sud", "Brésil": "Amérique du Sud", "Chili": "Amérique du Sud", "Colombie": "Amérique du Sud", "Équateur": "Amérique du Sud", "Guyana": "Amérique du Sud", "Paraguay": "Amérique du Sud", "Pérou": "Amérique du Sud", "Suriname": "Amérique du Sud", "Uruguay": "Amérique du Sud", "Venezuela": "Amérique du Sud", "Chine": "Asie de l'Est", "Corée du Nord": "Asie de l'Est", "Corée du Sud": "Asie de l'Est", "Japon": "Asie de l'Est", "Mongolie": "Asie de l'Est", "Taïwan": "Asie de l'Est", "Birmanie": "Asie du Sud-Est", "Brunei": "Asie du Sud-Est", "Cambodge": "Asie du Sud-Est", "Indonésie": "Asie du Sud-Est", "Laos": "Asie du Sud-Est", "Malaisie": "Asie du Sud-Est", "Philippines": "Asie du Sud-Est", "Singapour": "Asie du Sud-Est", "Thaïlande": "Asie du Sud-Est", "Timor oriental": "Asie du Sud-Est", "Viêt Nam": "Asie du Sud-Est", "Afghanistan": "Asie du Sud", "Bangladesh": "Asie du Sud", "Bhoutan": "Asie du Sud", "Inde": "Asie du Sud", "Maldives": "Asie du Sud", "Népal": "Asie du Sud", "Pakistan": "Asie du Sud", "Sri Lanka": "Asie du Sud", "Kazakhstan": "Asie centrale", "Kirghizistan": "Asie centrale", "Ouzbékistan": "Asie centrale", "Tadjikistan": "Asie centrale", "Turkménistan": "Asie centrale", "Arabie saoudite": "Moyen-Orient", "Bahreïn": "Moyen-Orient", "Émirats arabes unis": "Moyen-Orient", "Irak": "Moyen-Orient", "Iran": "Moyen-Orient", "Israël": "Moyen-Orient", "Jordanie": "Moyen-Orient", "Koweït": "Moyen-Orient", "Liban": "Moyen-Orient", "Oman": "Moyen-Orient", "Qatar": "Moyen-Orient", "Syrie": "Moyen-Orient", "Turquie": "Moyen-Orient", "Yémen": "Moyen-Orient", "Allemagne": "Europe de l'Ouest", "Autriche": "Europe de l'Ouest", "Belgique": "Europe de l'Ouest", "France": "Europe de l'Ouest", "Irlande": "Europe de l'Ouest", "Liechtenstein": "Europe de l'Ouest", "Luxembourg": "Europe de l'Ouest", "Monaco": "Europe de l'Ouest", "Pays-Bas": "Europe de l'Ouest", "Royaume-Uni": "Europe de l'Ouest", "Suisse": "Europe de l'Ouest", "Danemark": "Europe du Nord", "Estonie": "Europe du Nord", "Finlande": "Europe du Nord", "Islande": "Europe du Nord", "Lettonie": "Europe du Nord", "Lituanie": "Europe du Nord", "Norvège": "Europe du Nord", "Suède": "Europe du Nord", "Albanie": "Europe du Sud", "Andorre": "Europe du Sud", "Bosnie-Herzégovine": "Europe du Sud", "Chypre": "Europe du Sud", "Croatie": "Europe du Sud", "Espagne": "Europe du Sud", "Grèce": "Europe du Sud", "Italie": "Europe du Sud", "Macédoine du Nord": "Europe du Sud", "Malte": "Europe du Sud", "Monténégro": "Europe du Sud", "Portugal": "Europe du Sud", "Saint-Marin": "Europe du Sud", "Serbie": "Europe du Sud", "Slovénie": "Europe du Sud", "Vatican": "Europe du Sud", "Biélorussie": "Europe de l'Est", "Bulgarie": "Europe de l'Est", "Hongrie": "Europe de l'Est", "Moldavie": "Europe de l'Est", "Pologne": "Europe de l'Est", "République tchèque": "Europe de l'Est", "Roumanie": "Europe de l'Est", "Russie": "Europe de l'Est", "Slovaquie": "Europe de l'Est", "Ukraine": "Europe de l'Est", "Arménie": "Caucase", "Azerbaïdjan": "Caucase", "Géorgie": "Caucase", "Australie": "Australie et Nouvelle-Zélande", "Nouvelle-Zélande": "Australie et Nouvelle-Zélande", "Fidji": "Mélanésie", "Papouasie-Nouvelle-Guinée": "Mélanésie", "Salomon": "Mélanésie", "Vanuatu": "Mélanésie", "Kiribati": "Micronésie", "Marshall": "Micronésie", "Micronésie": "Micronésie", "Nauru": "Micronésie", "Palaos": "Micronésie", "Samoa": "Polynésie", "Tonga": "Polynésie", "Tuvalu": "Polynésie"};
 
@@ -1132,18 +1141,12 @@ function flagEmoji(name){
   const map = {"Afrique":"🌍","Amérique":"🌎","Asie":"🌏","Europe":"🏰","Océanie":"🏝️","Monde entier":"🗺️","Sélection personnalisée":"🎨"};
   return map[name] || "🏳️";
 }
-/* Drapeau reel representatif de chaque continent (au lieu d'un emoji), reutilise les
-   memes images que le jeu (FLAG_URL_OF). Repli sur l'emoji pour "Monde entier" et
-   "Selection personnalisee", qui n'ont pas de pays associe. */
-const CONTINENT_FLAG_COUNTRY = {
-  "Afrique": "Kenya",
-  "Amérique": "Brésil",
-  "Asie": "Japon",
-  "Europe": "France",
-  "Océanie": "Australie",
-};
+/* Drapeau reel representatif de chaque continent (au lieu d'un emoji), tire au hasard
+   parmi les pays du continent a chaque chargement de page (voir CONTINENT_RANDOM_FLAG
+   plus haut). Repli sur l'emoji pour "Monde entier" et "Selection personnalisee", qui
+   n'ont pas de pays associe. */
 function continentIconHtml(name){
-  const country = CONTINENT_FLAG_COUNTRY[name];
+  const country = CONTINENT_RANDOM_FLAG[name];
   const url = country ? FLAG_URL_OF[country] : null;
   if(url){
     return `<img src="${url}" alt="" class="continent-flag-icon" onerror="this.replaceWith(document.createTextNode('${flagEmoji(name)}'))">`;
