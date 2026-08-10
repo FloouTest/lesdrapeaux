@@ -188,6 +188,10 @@
   .cont-btn:hover{ transform:translateY(-2px); box-shadow:0 8px 18px rgba(30,42,60,0.14); border-color:var(--teal); }
   .cont-btn.selected{ border-color:var(--teal); background:var(--state-select-bg); }
   .cont-btn .name{ font-family:'Fraunces',serif; font-weight:600; font-size:18px; color:var(--ink); }
+  .continent-flag-icon{
+    width:22px; height:15px; object-fit:cover; border-radius:3px; vertical-align:-2px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.3); background:#4B5563; margin-right:2px;
+  }
   .cont-btn .count{ font-size:12.5px; color:var(--ink-soft); }
 
   .custom-select-btn{
@@ -649,7 +653,7 @@
       </div>
     </div>
 
-    <p class="subtitle">Choisis un continent à explorer, puis une façon de jouer. Les drapeaux et les pays viennent de l'article Wikimini « Drapeaux des pays du monde ».</p>
+    <p class="subtitle">Choisis un continent à explorer, puis une façon de jouer.</p>
 
     <div class="section-label">1 — Choisis ta destination</div>
     <div class="continents" id="continent-list"></div>
@@ -1128,6 +1132,24 @@ function flagEmoji(name){
   const map = {"Afrique":"🌍","Amérique":"🌎","Asie":"🌏","Europe":"🏰","Océanie":"🏝️","Monde entier":"🗺️","Sélection personnalisée":"🎨"};
   return map[name] || "🏳️";
 }
+/* Drapeau reel representatif de chaque continent (au lieu d'un emoji), reutilise les
+   memes images que le jeu (FLAG_URL_OF). Repli sur l'emoji pour "Monde entier" et
+   "Selection personnalisee", qui n'ont pas de pays associe. */
+const CONTINENT_FLAG_COUNTRY = {
+  "Afrique": "Kenya",
+  "Amérique": "Brésil",
+  "Asie": "Japon",
+  "Europe": "France",
+  "Océanie": "Australie",
+};
+function continentIconHtml(name){
+  const country = CONTINENT_FLAG_COUNTRY[name];
+  const url = country ? FLAG_URL_OF[country] : null;
+  if(url){
+    return `<img src="${url}" alt="" class="continent-flag-icon" onerror="this.replaceWith(document.createTextNode('${flagEmoji(name)}'))">`;
+  }
+  return flagEmoji(name);
+}
 function allCountryNames(){
   return Object.values(DATA).reduce((acc,arr)=>acc.concat(arr.map(c=>c[0])),[]);
 }
@@ -1148,7 +1170,7 @@ function buildContinentButtons(){
     const btn = document.createElement('button');
     btn.className = 'cont-btn';
     btn.dataset.name = name;
-    btn.innerHTML = `<div class="name">${flagEmoji(name)} ${name}</div><div class="count">${combined[name].length} drapeaux</div>`;
+    btn.innerHTML = `<div class="name">${continentIconHtml(name)} ${name}</div><div class="count">${combined[name].length} drapeaux</div>`;
     btn.addEventListener('click', ()=>{
       document.querySelectorAll('.cont-btn').forEach(b=>b.classList.remove('selected'));
       btn.classList.add('selected');
@@ -1220,7 +1242,7 @@ function buildPickerContent(){
     const section = document.createElement('div');
     section.className = 'picker-section';
     const h3 = document.createElement('h3');
-    h3.textContent = `${flagEmoji(cont)} ${cont}`;
+    h3.innerHTML = `${continentIconHtml(cont)} ${cont}`;
     section.appendChild(h3);
     const grid = document.createElement('div');
     grid.className = 'picker-grid';
