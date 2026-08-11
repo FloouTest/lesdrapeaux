@@ -170,6 +170,13 @@
     </div>
 
     <div class="card">
+      <h2>Historique général (100 dernières parties)</h2>
+      <p class="subtitle">Toutes les parties, tous joueurs confondus, les plus récentes en premier.</p>
+      <button class="btn-ghost" id="btn-refresh-history" style="margin-bottom:12px;">Rafraîchir</button>
+      <div id="general-history-content">Chargement…</div>
+    </div>
+
+    <div class="card">
       <h2>Top 10 classé</h2>
       <div id="top-players-content">Chargement…</div>
     </div>
@@ -244,6 +251,48 @@ function enterAdmin(dailyLimit){
   document.getElementById('screen-admin').classList.remove('hidden');
   document.getElementById('daily-limit-input').value = dailyLimit;
   loadTopPlayers();
+  loadGeneralHistory();
+}
+
+document.getElementById('btn-refresh-history').addEventListener('click', loadGeneralHistory);
+
+function formatAdminDate(iso){
+  if(!iso) return '';
+  // Les dates viennent soit de SQLite ("YYYY-MM-DD HH:MM:SS", UTC implicite),
+  // soit deja au format ISO complet (repli local) -> on gere les deux cas.
+  let s = iso;
+  if(s.includes(' ') && !s.includes('T')) s = s.replace(' ', 'T');
+  if(!/Z$|[+-]\d{2}:\d{2}$/.test(s)) s = s + 'Z';
+  const d = new Date(s);
+  if(Number.isNaN(d.getTime())) return iso;
+  const datePart = d.toLocaleDateString('fr-FR', { timeZone:'Europe/Paris', day:'2-digit', month:'2-digit', year:'numeric' });
+  const timePart = d.toLocaleTimeString('fr-FR', { timeZone:'Europe/Paris', hour:'2-digit', minute:'2-digit' });
+  return `${datePart} ${timePart}`;
+}
+
+async function loadGeneralHistory(){
+  const el = document.getElementById('general-history-content');
+  el.textContent = 'Chargement…';
+  try{
+    const res = await fetch('/api/admin/history', { headers: authHeaders() });
+    const data = await res.json();
+    if(!res.ok || !data.ok || !data.history || data.history.length === 0){
+      el.textContent = 'Aucune partie enregistrée pour le moment.';
+      return;
+    }
+    let html = '<table><thead><tr><th>Date/heure</th><th>Pseudo</th><th>Catégorie</th><th>Mode</th><th>Score</th><th>Points</th></tr></thead><tbody>';
+    data.history.forEach(e=>{
+      const isRanked = e.type === 'ranked';
+      const label = isRanked ? `🏆 ${TIER_NAMES[e.division] || 'Classé'}` : (e.label || '');
+      const modeLabel = isRanked ? 'Saisie' : (e.mode === 'qcm' ? '4 réponses' : 'Saisie');
+      const pts = isRanked ? `${e.points>=0?'+':''}${e.points} FP${e.daily_limit_reached?' (limite)':''}` : `${e.points ?? 0} pts`;
+      html += `<tr><td>${formatAdminDate(e.created_at)}</td><td>${e.pseudo}</td><td>${label}</td><td>${modeLabel}</td><td>${e.score}/${e.total}</td><td>${pts}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    el.innerHTML = html;
+  }catch(e){
+    el.textContent = 'Erreur réseau.';
+  }
 }
 
 document.getElementById('btn-save-limit').addEventListener('click', async ()=>{
@@ -330,7 +379,7 @@ async function loadPlayerHistory(pseudo){
       const isRanked = e.type === 'ranked';
       const label = isRanked ? `🏆 ${TIER_NAMES[e.division] || 'Classé'}` : (e.label || '');
       const pts = isRanked ? `${e.points>=0?'+':''}${e.points} FP${e.daily_limit_reached?' (limite)':''}` : `${e.points ?? 0} pts`;
-      html += `<tr><td>${(e.created_at||'').replace('T',' ').slice(0,16)}</td><td>${label}</td><td>${e.score}/${e.total}</td><td>${pts}</td></tr>`;
+      html += `<tr><td>${formatAdminDate(e.created_at)}</td><td>${label}</td><td>${e.score}/${e.total}</td><td>${pts}</td></tr>`;
     });
     html += '</tbody></table>';
     el.innerHTML = html;
