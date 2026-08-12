@@ -2,7 +2,7 @@
 // Renvoie les 100 dernières parties jouées, tous joueurs confondus (classiques + classées),
 // triées par date décroissante. Réservé à l'admin (voir shared.js).
 
-import { jsonResponse, isAuthorized, unauthorized } from "./shared.js";
+import { jsonResponse, isAuthorized, unauthorized } from "./_shared.js";
 
 export async function onRequestGet({ request, env }) {
   if (!isAuthorized(request, env)) return unauthorized();
