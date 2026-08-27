@@ -363,6 +363,44 @@
   .ranked-streak{ font-size:11.5px; color:#F0B429; margin-top:5px; font-weight:600; }
   .ranked-banner-right{ display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
   .ranked-format-note{ font-size:11.5px; color:#8D96A6; text-align:right; }
+
+  .versus-banner{
+    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    background:var(--paper-2); border:1.5px solid var(--coral); border-radius:14px;
+    padding:14px 20px; margin-bottom:20px;
+  }
+  .versus-banner-left{ display:flex; align-items:center; gap:12px; }
+  .versus-icon{ font-size:30px; line-height:1; }
+  .versus-title{ font-family:'Fraunces',serif; font-weight:700; font-size:16px; color:var(--ink); }
+  .versus-sub{ font-size:12px; color:var(--ink-soft); }
+  .versus-play-btn{ background:var(--coral); }
+  .versus-play-btn:hover{ background:#B94530; }
+
+  /* ---------- MODE VERSUS ---------- */
+  .versus-lobby-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px; }
+  @media (max-width:600px){ .versus-lobby-grid{ grid-template-columns:1fr; } }
+  .versus-lobby-card{
+    background:var(--paper-2); border:1px solid var(--line); border-radius:14px; padding:18px;
+  }
+  .versus-lobby-card h3{ font-family:'Fraunces',serif; font-size:16px; color:var(--ink); margin:0; }
+
+  .versus-code-display{
+    font-family:'Fraunces',serif; font-weight:700; font-size:42px; letter-spacing:.15em;
+    text-align:center; color:var(--coral); background:var(--paper-2); border:2px dashed var(--coral);
+    border-radius:16px; padding:24px; margin:20px 0;
+  }
+
+  .versus-hp-row{ display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+  .versus-hp-block{ flex:1; min-width:0; }
+  .versus-hp-label{ font-size:12.5px; font-weight:700; color:var(--ink-soft); margin-bottom:4px; }
+  .versus-hp-track{
+    height:16px; background:var(--paper-2); border:1px solid var(--line); border-radius:999px; overflow:hidden;
+  }
+  .versus-hp-fill{ height:100%; width:100%; transition:width .35s ease, background .3s ease; }
+  .versus-hp-self{ background:var(--teal); }
+  .versus-hp-opp{ background:var(--coral); }
+  .versus-hp-value{ font-size:11.5px; color:var(--ink-soft); margin-top:3px; text-align:right; }
+  .versus-vs{ font-family:'Fraunces',serif; font-weight:700; font-size:16px; color:var(--gold); flex:none; }
   .ranked-play-btn{ background:var(--gold); color:#1E2A3C; }
   .ranked-play-btn:hover{ background:#E0AE45; }
 
@@ -653,6 +691,17 @@
       </div>
     </div>
 
+    <div class="versus-banner">
+      <div class="versus-banner-left">
+        <div class="versus-icon">⚔️</div>
+        <div>
+          <div class="versus-title">Mode Versus 1v1</div>
+          <div class="versus-sub">Défie un ami en duel, en direct</div>
+        </div>
+      </div>
+      <button type="button" class="btn-primary versus-play-btn" id="btn-open-versus">⚔️ Jouer en 1v1</button>
+    </div>
+
     <p class="subtitle">Choisis un continent à explorer, puis une façon de jouer.</p>
 
     <div class="section-label">1 — Choisis ta destination</div>
@@ -798,6 +847,74 @@
     <h2 style="font-size:22px; margin-bottom:6px;">🕐 Historique</h2>
     <p class="subtitle">Tes 10 dernières parties (classiques et classées), les plus récentes en premier.</p>
     <div id="history-content"></div>
+  </div>
+
+  <!-- ECRAN 6 : VERSUS - LOBBY (créer / rejoindre) -->
+  <div id="screen-versus-lobby" class="card hidden">
+    <button class="top-link" id="btn-versus-lobby-back">← Retour</button>
+    <h2 style="font-size:22px; margin-bottom:6px;">⚔️ Mode Versus 1v1</h2>
+    <p class="subtitle">Vies de 1000 PV chacun. Bonne réponse : -100 PV à l'adversaire, +50 PV pour toi. Mauvaise réponse : -25 PV pour toi.</p>
+
+    <div class="versus-lobby-grid">
+      <div class="versus-lobby-card">
+        <h3>Créer un salon</h3>
+        <p class="subtitle" style="margin:6px 0 14px;">Génère un code à partager avec ton adversaire.</p>
+        <button type="button" class="btn-primary" id="btn-versus-create" style="width:100%;">Créer mon salon</button>
+      </div>
+      <div class="versus-lobby-card">
+        <h3>Rejoindre un salon</h3>
+        <p class="subtitle" style="margin:6px 0 14px;">Entre le code que ton adversaire t'a donné.</p>
+        <div class="pseudo-row" style="margin-top:0;">
+          <input type="text" id="versus-join-code-input" class="pseudo-input" placeholder="Code (ex : X7K2P)" maxlength="10" autocomplete="off" style="text-transform:uppercase;">
+          <button type="button" class="btn-primary" id="btn-versus-join">Rejoindre</button>
+        </div>
+      </div>
+    </div>
+    <div id="versus-lobby-msg" class="msg-error hidden"></div>
+  </div>
+
+  <!-- ECRAN 7 : VERSUS - SALLE D'ATTENTE -->
+  <div id="screen-versus-wait" class="card hidden">
+    <button class="top-link" id="btn-versus-wait-back">← Annuler</button>
+    <h2 style="font-size:22px; margin-bottom:6px;">⏳ En attente d'un adversaire…</h2>
+    <p class="subtitle">Partage ce code avec la personne que tu veux affronter :</p>
+    <div class="versus-code-display" id="versus-code-display">XXXXX</div>
+    <p class="subtitle" style="text-align:center;">La partie démarre automatiquement dès qu'elle rejoint le salon.</p>
+  </div>
+
+  <!-- ECRAN 8 : VERSUS - COMBAT -->
+  <div id="screen-versus-battle" class="card hidden">
+    <div class="versus-hp-row">
+      <div class="versus-hp-block">
+        <div class="versus-hp-label">Toi</div>
+        <div class="versus-hp-track"><div class="versus-hp-fill versus-hp-self" id="versus-self-hp-fill"></div></div>
+        <div class="versus-hp-value" id="versus-self-hp-value">1000 / 1000</div>
+      </div>
+      <div class="versus-vs">VS</div>
+      <div class="versus-hp-block">
+        <div class="versus-hp-label" id="versus-opp-label">Adversaire</div>
+        <div class="versus-hp-track"><div class="versus-hp-fill versus-hp-opp" id="versus-opp-hp-fill"></div></div>
+        <div class="versus-hp-value" id="versus-opp-hp-value">1000 / 1000</div>
+      </div>
+    </div>
+
+    <div class="flag-frame"><div id="versus-flag-visual" class="flag-visual"></div></div>
+
+    <div class="type-row">
+      <input type="text" id="versus-type-input" class="type-input" placeholder="Nom du pays…" autocomplete="off">
+      <button type="button" class="btn-validate" id="versus-btn-validate">Valider</button>
+    </div>
+    <div class="feedback" id="versus-feedback"></div>
+  </div>
+
+  <!-- ECRAN 9 : VERSUS - RESULTAT -->
+  <div id="screen-versus-result" class="card hidden">
+    <div class="result-badge" id="versus-result-badge">🏆</div>
+    <div class="result-msg" id="versus-result-msg"></div>
+    <div class="result-actions">
+      <button class="btn-primary" id="btn-versus-replay">Nouveau salon</button>
+      <button class="btn-ghost" id="btn-versus-home">Retour à l'accueil</button>
+    </div>
   </div>
 
 </div>
@@ -1105,6 +1222,10 @@ const screenQuiz = document.getElementById('screen-quiz');
 const screenResult = document.getElementById('screen-result');
 const screenLeaderboard = document.getElementById('screen-leaderboard');
 const screenHistory = document.getElementById('screen-history');
+const screenVersusLobby = document.getElementById('screen-versus-lobby');
+const screenVersusWait = document.getElementById('screen-versus-wait');
+const screenVersusBattle = document.getElementById('screen-versus-battle');
+const screenVersusResult = document.getElementById('screen-versus-result');
 
 /* ============ ETAT DU JEU ============ */
 let state = {
@@ -2627,6 +2748,242 @@ document.getElementById('theme-toggle').addEventListener('click', ()=>{
   try{ localStorage.setItem('quiz-drapeaux-theme', next); }catch(e){}
 });
 initTheme();
+
+/* ============ MODE VERSUS 1v1 ============ */
+let versusState = {
+  code: null,
+  role: null,
+  flags: [],
+  selfIndex: 0,
+  selfHp: 1000,
+  oppHp: 1000,
+  oppPseudo: null,
+  pollTimer: null,
+};
+
+function pickVersusFlags(n){
+  const pool = shuffle(allCountryPairs());
+  return pool.slice(0, n).map(c=>c[0]);
+}
+
+function stopVersusPolling(){
+  if(versusState.pollTimer){ clearInterval(versusState.pollTimer); versusState.pollTimer = null; }
+}
+
+function openVersusLobby(){
+  screenHome.classList.add('hidden');
+  screenVersusLobby.classList.remove('hidden');
+  document.getElementById('versus-lobby-msg').classList.add('hidden');
+  document.getElementById('versus-join-code-input').value = '';
+}
+document.getElementById('btn-open-versus').addEventListener('click', openVersusLobby);
+document.getElementById('btn-versus-lobby-back').addEventListener('click', ()=>{
+  screenVersusLobby.classList.add('hidden');
+  screenHome.classList.remove('hidden');
+});
+
+async function createVersusRoom(){
+  const msg = document.getElementById('versus-lobby-msg');
+  msg.classList.add('hidden');
+  const flags = pickVersusFlags(40);
+  try{
+    const res = await fetch('/api/versus/create', {
+      method:'POST', cache:'no-store',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ pseudo: currentPseudo || 'Joueur', flags })
+    });
+    const data = await res.json();
+    if(!res.ok || !data.ok){ showMsgEl('versus-lobby-msg', data.error || 'Erreur lors de la création du salon.'); return; }
+    versusState.code = data.code;
+    versusState.role = 'p1';
+    versusState.flags = flags;
+    versusState.selfIndex = 0;
+    versusState.selfHp = 1000;
+    versusState.oppHp = 1000;
+    versusState.oppPseudo = null;
+    showVersusWaitScreen();
+  }catch(e){
+    showMsgEl('versus-lobby-msg', 'Le mode versus nécessite une connexion au serveur (indisponible en local/hors ligne).');
+  }
+}
+document.getElementById('btn-versus-create').addEventListener('click', createVersusRoom);
+
+function showVersusWaitScreen(){
+  screenVersusLobby.classList.add('hidden');
+  screenVersusWait.classList.remove('hidden');
+  document.getElementById('versus-code-display').textContent = versusState.code;
+  stopVersusPolling();
+  versusState.pollTimer = setInterval(async ()=>{
+    try{
+      const res = await fetch(`/api/versus/state?code=${encodeURIComponent(versusState.code)}&pseudo=${encodeURIComponent(currentPseudo||'Joueur')}`, { cache:'no-store' });
+      const data = await res.json();
+      if(data && data.ok && data.status === 'active'){
+        stopVersusPolling();
+        versusState.oppPseudo = data.opponentPseudo;
+        startVersusBattle();
+      }
+    }catch(e){}
+  }, 1200);
+}
+document.getElementById('btn-versus-wait-back').addEventListener('click', ()=>{
+  stopVersusPolling();
+  screenVersusWait.classList.add('hidden');
+  screenVersusLobby.classList.remove('hidden');
+});
+
+async function joinVersusRoom(){
+  const msg = document.getElementById('versus-lobby-msg');
+  msg.classList.add('hidden');
+  const code = document.getElementById('versus-join-code-input').value.trim().toUpperCase();
+  if(!code){ showMsgEl('versus-lobby-msg', 'Entre un code de salon.'); return; }
+  try{
+    const res = await fetch('/api/versus/join', {
+      method:'POST', cache:'no-store',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ code, pseudo: currentPseudo || 'Joueur' })
+    });
+    const data = await res.json();
+    if(!res.ok || !data.ok){ showMsgEl('versus-lobby-msg', data.error || 'Erreur.'); return; }
+    versusState.code = data.code;
+    versusState.role = data.role;
+    versusState.flags = data.flags;
+    versusState.selfIndex = 0;
+    versusState.selfHp = 1000;
+    versusState.oppHp = 1000;
+    startVersusBattle();
+  }catch(e){
+    showMsgEl('versus-lobby-msg', 'Erreur réseau — le mode versus nécessite une connexion au serveur.');
+  }
+}
+document.getElementById('btn-versus-join').addEventListener('click', joinVersusRoom);
+document.getElementById('versus-join-code-input').addEventListener('keydown', e=>{ if(e.key==='Enter') joinVersusRoom(); });
+
+function updateVersusHpDisplay(){
+  const selfPct = Math.max(0, Math.min(100, versusState.selfHp/10));
+  const oppPct = Math.max(0, Math.min(100, versusState.oppHp/10));
+  document.getElementById('versus-self-hp-fill').style.width = selfPct + '%';
+  document.getElementById('versus-opp-hp-fill').style.width = oppPct + '%';
+  document.getElementById('versus-self-hp-value').textContent = `${versusState.selfHp} / 1000`;
+  document.getElementById('versus-opp-hp-value').textContent = `${versusState.oppHp} / 1000`;
+}
+
+function loadVersusFlag(){
+  const name = versusState.flags[versusState.selfIndex];
+  const visual = document.getElementById('versus-flag-visual');
+  visual.innerHTML = '';
+  const feedback = document.getElementById('versus-feedback');
+  feedback.textContent = '';
+  feedback.className = 'feedback';
+  if(!name){
+    visual.innerHTML = `<div class="flag-fallback">⏳<span>En attente de la fin du match…</span></div>`;
+    document.getElementById('versus-type-input').disabled = true;
+    document.getElementById('versus-btn-validate').disabled = true;
+    return;
+  }
+  const img = document.createElement('img');
+  img.src = FLAG_URL_OF[name] || '';
+  img.alt = 'Drapeau à deviner';
+  img.onerror = function(){ visual.innerHTML = `<div class="flag-fallback">🏳️<span>${name}</span></div>`; };
+  visual.appendChild(img);
+  const input = document.getElementById('versus-type-input');
+  input.value = '';
+  input.disabled = false;
+  document.getElementById('versus-btn-validate').disabled = false;
+  setTimeout(()=>input.focus(), 30);
+}
+
+function startVersusBattle(){
+  screenVersusLobby.classList.add('hidden');
+  screenVersusWait.classList.add('hidden');
+  screenVersusBattle.classList.remove('hidden');
+  document.getElementById('versus-opp-label').textContent = versusState.oppPseudo || 'Adversaire';
+  updateVersusHpDisplay();
+  loadVersusFlag();
+
+  stopVersusPolling();
+  versusState.pollTimer = setInterval(async ()=>{
+    try{
+      const res = await fetch(`/api/versus/state?code=${encodeURIComponent(versusState.code)}&pseudo=${encodeURIComponent(currentPseudo||'Joueur')}`, { cache:'no-store' });
+      const data = await res.json();
+      if(data && data.ok){
+        versusState.oppHp = data.oppHp;
+        if(!versusState.oppPseudo) versusState.oppPseudo = data.opponentPseudo;
+        updateVersusHpDisplay();
+        if(data.status === 'finished'){
+          stopVersusPolling();
+          showVersusResult(data.winner);
+        }
+      }
+    }catch(e){}
+  }, 1200);
+}
+
+async function submitVersusAnswer(){
+  const input = document.getElementById('versus-type-input');
+  const name = versusState.flags[versusState.selfIndex];
+  if(!name || input.disabled) return;
+  const result = isAnswerCorrect(input.value, name);
+  input.disabled = true;
+  document.getElementById('versus-btn-validate').disabled = true;
+  const fb = document.getElementById('versus-feedback');
+  fb.textContent = result.ok ? '✓ Bonne réponse ! (+50 PV, -100 PV adversaire)' : `✗ C'était : ${name} (-25 PV)`;
+  fb.className = 'feedback ' + (result.ok ? 'ok' : 'ko');
+
+  try{
+    const res = await fetch('/api/versus/answer', {
+      method:'POST', cache:'no-store',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ code: versusState.code, pseudo: currentPseudo || 'Joueur', index: versusState.selfIndex, correct: result.ok })
+    });
+    const data = await res.json();
+    if(data && data.ok){
+      versusState.selfHp = data.selfHp;
+      versusState.oppHp = data.oppHp;
+      versusState.selfIndex = data.selfIndex;
+      updateVersusHpDisplay();
+      if(data.status === 'finished'){
+        stopVersusPolling();
+        showVersusResult(data.winner);
+        return;
+      }
+      setTimeout(loadVersusFlag, 600);
+    } else {
+      input.disabled = false;
+      document.getElementById('versus-btn-validate').disabled = false;
+    }
+  }catch(e){
+    input.disabled = false;
+    document.getElementById('versus-btn-validate').disabled = false;
+  }
+}
+document.getElementById('versus-btn-validate').addEventListener('click', submitVersusAnswer);
+document.getElementById('versus-type-input').addEventListener('keydown', e=>{ if(e.key==='Enter') submitVersusAnswer(); });
+
+function showVersusResult(winner){
+  stopVersusPolling();
+  screenVersusBattle.classList.add('hidden');
+  screenVersusResult.classList.remove('hidden');
+  const badge = document.getElementById('versus-result-badge');
+  const msg = document.getElementById('versus-result-msg');
+  if(winner === 'draw'){
+    badge.textContent = '🤝';
+    msg.textContent = 'Match nul !';
+  } else if(winner === (currentPseudo || 'Joueur')){
+    badge.textContent = '🏆';
+    msg.textContent = `Victoire ! Tu as battu ${versusState.oppPseudo || 'ton adversaire'}.`;
+  } else {
+    badge.textContent = '💀';
+    msg.textContent = `Défaite face à ${winner || versusState.oppPseudo || 'ton adversaire'}.`;
+  }
+}
+document.getElementById('btn-versus-replay').addEventListener('click', ()=>{
+  screenVersusResult.classList.add('hidden');
+  openVersusLobby();
+});
+document.getElementById('btn-versus-home').addEventListener('click', ()=>{
+  screenVersusResult.classList.add('hidden');
+  screenHome.classList.remove('hidden');
+});
 
 initPlayer();
 
