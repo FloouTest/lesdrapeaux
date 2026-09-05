@@ -90,6 +90,17 @@ Puis redéploie le site (nouveau push, ou `wrangler pages deploy` à nouveau)
 pour que `index.html` et `functions/api/leaderboard.js` mis à jour prennent
 effet.
 
+## Migration capitales (version 5)
+
+Base existante, après migrations précédentes :
+
+```bash
+wrangler d1 execute flags-quiz-db --remote --file=./migration_v5_capitals.sql
+```
+
+Anciennes lignes restent catégorie `flags`; progression classée capitales est indépendante.
+Sources du jeu de données documentées dans `capitals.js` (UNTERM + REST Countries).
+
 ## Notes
 
 - Le pseudo reste stocké localement sur chaque appareil (comme un "nom

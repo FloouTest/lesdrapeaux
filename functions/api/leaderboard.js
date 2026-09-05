@@ -25,12 +25,13 @@ export async function onRequestGet({ request, env }) {
     const url = new URL(request.url);
     const continent = url.searchParams.get("continent");
     const flagCountParam = url.searchParams.get("flagCount");
+    const category = url.searchParams.get("category") === "capitals" ? "capitals" : "flags";
 
     let query =
-      "SELECT pseudo, continent, mode, score, total, mistakes, seconds, points, flag_count AS flagCount, details, created_at " +
+      "SELECT pseudo, category, continent, mode, score, total, mistakes, seconds, points, flag_count AS flagCount, details, created_at " +
       "FROM leaderboard";
-    const conditions = [];
-    const params = [];
+    const conditions = ["category = ?"];
+    const params = [category];
 
     if (continent && continent !== "Tous") {
       conditions.push("continent = ?");
@@ -71,6 +72,7 @@ export async function onRequestPost({ request, env }) {
 
     const pseudo = String(body.pseudo ?? "Joueur").trim().slice(0, 20) || "Joueur";
     const continent = String(body.continent ?? "").trim().slice(0, 60);
+    const category = body.category === "capitals" ? "capitals" : "flags";
     const mode = ALLOWED_MODES.has(body.mode) ? body.mode : "qcm";
     const score = clampInt(body.score, 0, 1000);
     const total = clampInt(body.total, 1, 1000);
@@ -97,10 +99,10 @@ export async function onRequestPost({ request, env }) {
     }
 
     await env.DB.prepare(
-      `INSERT INTO leaderboard (pseudo, continent, mode, score, total, mistakes, seconds, points, flag_count, details)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO leaderboard (pseudo, category, continent, mode, score, total, mistakes, seconds, points, flag_count, details)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
-      .bind(pseudo, continent, mode, score, total, mistakes, seconds, points, flagCount, details)
+      .bind(pseudo, category, continent, mode, score, total, mistakes, seconds, points, flagCount, details)
       .run();
 
     return jsonResponse({ ok: true });

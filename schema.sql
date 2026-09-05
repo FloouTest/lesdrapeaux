@@ -7,6 +7,7 @@
 CREATE TABLE IF NOT EXISTS leaderboard (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   pseudo TEXT NOT NULL,
+  category TEXT NOT NULL DEFAULT 'flags',
   continent TEXT NOT NULL,
   mode TEXT NOT NULL,
   score INTEGER NOT NULL,
@@ -20,6 +21,7 @@ CREATE TABLE IF NOT EXISTS leaderboard (
 );
 
 CREATE INDEX IF NOT EXISTS idx_leaderboard_continent ON leaderboard(continent);
+CREATE INDEX IF NOT EXISTS idx_leaderboard_category ON leaderboard(category);
 CREATE INDEX IF NOT EXISTS idx_leaderboard_flagcount ON leaderboard(flag_count);
 CREATE INDEX IF NOT EXISTS idx_leaderboard_ranking ON leaderboard(points, seconds);
 
@@ -37,6 +39,17 @@ CREATE TABLE IF NOT EXISTS players (
 
 CREATE INDEX IF NOT EXISTS idx_players_ranking ON players(division, points);
 
+-- Progression séparée par sujet. `players` reste la source des anciens profils drapeaux.
+CREATE TABLE IF NOT EXISTS ranked_players (
+  pseudo TEXT PRIMARY KEY,
+  category TEXT NOT NULL DEFAULT 'capitals' CHECK(category = 'capitals'),
+  division INTEGER NOT NULL DEFAULT 0, points INTEGER NOT NULL DEFAULT 0,
+  streak INTEGER NOT NULL DEFAULT 0, games_played INTEGER NOT NULL DEFAULT 0,
+  games_today INTEGER NOT NULL DEFAULT 0, games_today_date TEXT NOT NULL DEFAULT '',
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_ranked_players_ranking ON ranked_players(category, division, points);
+
 -- Réglages du mode classé, modifiables via le panneau d'administration (admin.html)
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
@@ -50,6 +63,7 @@ INSERT INTO settings (key, value) VALUES ('ranked_daily_limit', '5')
 CREATE TABLE IF NOT EXISTS ranked_history (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   pseudo TEXT NOT NULL,
+  category TEXT NOT NULL DEFAULT 'flags',
   score INTEGER NOT NULL,
   total INTEGER NOT NULL,
   gained INTEGER NOT NULL,

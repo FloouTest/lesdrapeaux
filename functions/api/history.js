@@ -23,11 +23,11 @@ export async function onRequestGet({ request, env }) {
     if (!pseudo) return jsonResponse({ ok: false, error: "Pseudo manquant." }, 400);
 
     const { results } = await env.DB.prepare(
-      `SELECT created_at, 'casual' AS type, continent AS label, mode, score, total, points,
+      `SELECT created_at, 'casual' AS type, category, continent AS label, mode, score, total, points,
               NULL AS division, 0 AS daily_limit_reached, details
        FROM leaderboard WHERE pseudo = ?
        UNION ALL
-       SELECT created_at, 'ranked' AS type, 'Classé' AS label, 'saisie' AS mode, score, total,
+       SELECT created_at, 'ranked' AS type, category, 'Classé' AS label, 'saisie' AS mode, score, total,
               gained AS points, division_after AS division, daily_limit_reached, details
        FROM ranked_history WHERE pseudo = ?
        ORDER BY created_at DESC

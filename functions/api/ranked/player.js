@@ -8,9 +8,11 @@ export async function onRequestGet({ request, env }) {
   try {
     const url = new URL(request.url);
     const pseudo = (url.searchParams.get("pseudo") || "Joueur").trim().slice(0, 20) || "Joueur";
+    const category = url.searchParams.get("category") === "capitals" ? "capitals" : "flags";
+    const table = category === "capitals" ? "ranked_players" : "players";
 
     const row = await env.DB.prepare(
-      "SELECT division, points, streak, games_played, games_today, games_today_date FROM players WHERE pseudo = ?"
+      `SELECT division, points, streak, games_played, games_today, games_today_date FROM ${table} WHERE pseudo = ?${category === "capitals" ? " AND category = 'capitals'" : ""}`
     ).bind(pseudo).first();
 
     const today = todayKey();

@@ -1,51 +1,26 @@
-// Cloudflare Pages Function — GET /api/versus/state?code=XXXXX&pseudo=...
-// Renvoie l'état courant du match, du point de vue du pseudo demandeur (soi/adversaire).
-// Appelée en polling rapide par le client (~1 fois par seconde) pour simuler du temps réel
-// sans Durable Objects.
-
-function jsonResponse(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store, no-cache, must-revalidate",
-    },
-  });
-}
+import { authenticate, cleanCode, ensureTables, json, parseFlags, publicFlag, roomSettings } from "./_shared.js";
 
 export async function onRequestGet({ request, env }) {
   try {
-    const url = new URL(request.url);
-    const code = (url.searchParams.get("code") || "").trim().toUpperCase().slice(0, 10);
-    const pseudo = (url.searchParams.get("pseudo") || "").trim().slice(0, 20);
-
-    if (!code) return jsonResponse({ ok: false, error: "Code manquant." }, 400);
-
-    const row = await env.DB.prepare("SELECT * FROM versus_matches WHERE code = ?").bind(code).first();
-    if (!row) return jsonResponse({ ok: false, error: "Salon introuvable." }, 404);
-
-    const isP1 = row.player1 === pseudo;
-    const isP2 = row.player2 === pseudo;
-    if (!isP1 && !isP2) return jsonResponse({ ok: false, error: "Tu ne fais pas partie de ce salon." }, 403);
-
-    const role = isP1 ? 'p1' : 'p2';
-    const selfHp = isP1 ? row.p1_hp : row.p2_hp;
-    const oppHp = isP1 ? row.p2_hp : row.p1_hp;
-    const selfIndex = isP1 ? row.p1_index : row.p2_index;
-    const oppIndex = isP1 ? row.p2_index : row.p1_index;
-
-    return jsonResponse({
-      ok: true,
-      code,
-      role,
-      status: row.status,
-      opponentJoined: !!row.player2,
-      opponentPseudo: isP1 ? row.player2 : row.player1,
-      selfHp, oppHp, selfIndex, oppIndex,
-      winner: row.winner,
-      flags: JSON.parse(row.flags),
-    });
-  } catch (err) {
-    return jsonResponse({ ok: false, error: "Erreur lors de la lecture de l'état du salon." }, 500);
-  }
+    const url = new URL(request.url), code = cleanCode(url.searchParams.get("code"));
+    const suppliedToken = url.searchParams.get("token") || request.headers.get("Authorization")?.replace(/^Bearer\s+/i, "");
+    if (!code || !suppliedToken) return json({ ok: false, error: "Code ou jeton manquant." }, 400);
+    await ensureTables(env.DB);
+    const room = await env.DB.prepare(`SELECT r.*, s.category, s.continent, o.answer_mode FROM versus_rooms r
+      LEFT JOIN versus_room_settings s ON s.room_code = r.code
+      LEFT JOIN versus_room_options o ON o.room_code = r.code WHERE r.code = ?`).bind(code).first();
+    if (!room) return json({ ok: false, error: "Salon introuvable." }, 404);
+    const self = await authenticate(env.DB, code, suppliedToken);
+    if (!self) return json({ ok: false, error: "Accès refusé." }, 403);
+    const players = await env.DB.prepare("SELECT slot, pseudo, hp, question_index FROM versus_players WHERE room_code = ? ORDER BY slot").bind(code).all();
+    const list = players.results.map(p => ({ playerId: p.slot, role: `p${p.slot}`, pseudo: p.pseudo, hp: p.hp, index: p.question_index, self: p.slot === self.slot }));
+    const opponents = list.filter(p => !p.self);
+    const flags = parseFlags(room.flags), settings = roomSettings(room);
+    const makePublic = flag => publicFlag(flag, settings.answerMode);
+    return json({ ok: true, code, role: `p${self.slot}`, playerId: self.slot, isHost: suppliedToken === room.host_token,
+      status: room.status, maxPlayers: room.max_players, ...settings, playerCount: list.length, players: list,
+      opponentJoined: opponents.length > 0, opponentPseudo: opponents[0]?.pseudo || null,
+      selfHp: self.hp, oppHp: opponents[0]?.hp ?? null, selfIndex: self.question_index, oppIndex: opponents[0]?.index ?? null,
+      winner: room.winner, flags: flags.map(makePublic), question: flags[self.question_index] ? makePublic(flags[self.question_index]) : null });
+  } catch (error) { return json({ ok: false, error: "Erreur lors de la lecture de l'état du salon." }, 500); }
 }

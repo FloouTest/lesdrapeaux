@@ -253,6 +253,10 @@
     margin-top:10px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;
   }
 
+  .game-categories{ display:flex; gap:10px; margin:16px 0 4px; }
+  .game-category-btn{ flex:1; border:1.5px solid var(--line); background:var(--paper-2); color:var(--ink); border-radius:12px; padding:12px; font:600 14px 'Inter',sans-serif; cursor:pointer; }
+  .game-category-btn.selected{ border-color:var(--teal); background:var(--state-select-bg); color:var(--teal); }
+  .capital-prompt{ color:#F3ECDA; text-align:center; font-family:'Fraunces',serif; font-weight:700; font-size:clamp(25px,6vw,42px); }
   .modes{ display:flex; gap:12px; flex-wrap:wrap; }
   .mode-btn{
     flex:1; min-width:220px;
@@ -390,6 +394,37 @@
     border-radius:16px; padding:24px; margin:20px 0;
   }
 
+  .versus-options{ display:grid; gap:12px; margin-bottom:16px; }
+  .versus-options label{ display:grid; gap:6px; color:var(--ink-soft); font-size:12px; font-weight:600; }
+  .capital-question{ display:flex; flex-direction:column; align-items:center; gap:14px; width:100%; }
+  .flag-visual:has(.capital-question){ aspect-ratio:auto; min-height:200px; padding:20px 12px; box-sizing:border-box; }
+  .flag-visual .capital-question img{ width:120px; height:80px; padding:0; object-fit:contain; border-radius:6px; }
+  .capital-question .capital-prompt{ padding:0; text-align:center; font-size:clamp(22px,5vw,32px); overflow-wrap:anywhere; }
+  .versus-heading{ display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:20px; }
+  .versus-heading h2{ margin:4px 0; font-family:'Fraunces',serif; font-size:28px; }
+  .versus-eyebrow{ color:var(--teal); font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
+  .versus-live{ padding:7px 12px; border:1px solid var(--line); border-radius:999px; background:var(--paper-2); font-size:12px; color:var(--ink-soft); }
+  .versus-roster{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin:16px 0 24px; }
+  .versus-player{ min-width:0; padding:14px; border:1px solid var(--line); border-radius:14px; background:var(--paper-2); }
+  .versus-player.is-self{ border-color:var(--teal); box-shadow:inset 0 3px var(--teal); }
+  .versus-player.is-out{ opacity:.65; }
+  .versus-player-heading{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .versus-avatar{ display:grid; place-items:center; flex:none; width:34px; height:34px; border-radius:10px; background:var(--paper); border:1px solid var(--line); font-weight:800; color:var(--teal); }
+  .versus-player-name{ display:block; overflow-wrap:anywhere; font-size:14px; }
+  .versus-player-status{ display:block; margin-top:3px; font-size:11px; color:var(--ink-soft); }
+  .versus-player .versus-hp-track{ height:9px; background:var(--paper); }
+  .versus-player .versus-hp-fill{ background:var(--teal); }
+  .versus-player.is-low .versus-hp-fill{ background:var(--coral); }
+  .versus-player-footer{ display:flex; justify-content:space-between; gap:8px; margin-top:8px; font-size:11px; color:var(--ink-soft); }
+  .versus-arena{ padding:22px; background:var(--paper-2); border:1px solid var(--line); border-radius:20px; }
+  .versus-arena .flag-frame{ margin-top:0; }
+  .versus-arena .feedback{ min-height:26px; }
+  .versus-mcq-area{ grid-template-columns:repeat(2,minmax(0,1fr)); margin-top:20px; }
+  .versus-mcq-area .choice-btn{ min-height:58px; }
+  @media(max-width:520px){ .versus-mcq-area{ grid-template-columns:1fr; } }
+  .versus-input-hint{ text-align:center; color:var(--ink-soft); font-size:11px; margin-top:8px; }
+  @media(max-width:480px){ .versus-roster{ grid-template-columns:1fr 1fr; gap:8px; } .versus-player{ padding:10px; } .versus-avatar{ display:none; } .versus-arena{ padding:12px; } }
+  @media(prefers-reduced-motion:reduce){ .versus-hp-fill{ transition:none !important; } }
   .versus-hp-row{ display:flex; align-items:center; gap:14px; margin-bottom:20px; }
   .versus-hp-block{ flex:1; min-width:0; }
   .versus-hp-label{ font-size:12.5px; font-weight:700; color:var(--ink-soft); margin-bottom:4px; }
@@ -420,22 +455,45 @@
   .lb-tab.selected{ border-color:var(--gold); color:var(--gold); background:var(--state-gold-bg); }
 
   /* ---------- ECRAN CLASSEMENT ---------- */
-  .lb-filters{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
-  .lb-filter-btn{
-    border:1.5px solid var(--line); background:var(--paper-2); color:var(--ink-soft);
-    border-radius:999px; padding:6px 14px; font-size:12.5px; font-weight:600;
-    font-family:'Inter',sans-serif; cursor:pointer;
+  .lb-toolbar{
+    display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px;
+    margin:0 0 20px; padding:14px; background:var(--paper-2); border:1px solid var(--line); border-radius:14px;
   }
-  .lb-filter-btn.selected{ border-color:var(--teal); color:var(--teal); background:var(--state-select-bg); }
-  .lb-table{ width:100%; border-collapse:collapse; font-size:13.5px; }
-  .lb-table th{
-    text-align:left; font-size:11px; letter-spacing:.08em; text-transform:uppercase;
-    color:var(--ink-soft); padding:8px 10px; border-bottom:1.5px solid var(--line);
+  .lb-field{ display:grid; gap:6px; min-width:0; }
+  .lb-field label{ font-size:10px; font-weight:800; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-soft); }
+  .lb-select{
+    width:100%; min-height:42px; padding:9px 34px 9px 11px; border:1.5px solid var(--line); border-radius:10px;
+    background-color:var(--input-bg); color:var(--ink); font-size:13px; font-weight:600; cursor:pointer;
   }
-  .lb-table td{ padding:9px 10px; border-bottom:1px solid var(--line); color:var(--ink); }
-  .lb-table tr.me{ background:var(--state-select-bg); }
-  .lb-rank{ font-weight:700; color:var(--ink); width:28px; }
-  .lb-empty{ color:var(--ink-soft); font-size:14px; padding:20px 0; text-align:center; }
+  .lb-select:hover{ border-color:var(--teal); }
+  .lb-table-wrap{ overflow-x:auto; border:1px solid var(--line); border-radius:14px; background:var(--surface-raised); }
+  .lb-table{ width:100%; min-width:650px; border-collapse:collapse; font-size:13.5px; }
+  .lb-table th{ text-align:left; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); padding:11px 10px; border-bottom:1.5px solid var(--line); background:var(--paper-2); }
+  .lb-table td{ padding:11px 10px; border-bottom:1px solid var(--line); color:var(--ink); }
+  .lb-table tbody tr:last-child td{ border-bottom:0; }
+  .lb-table tbody tr:hover{ background:var(--paper-2); }
+  .lb-table tr.me{ background:var(--state-select-bg); box-shadow:inset 3px 0 var(--teal); }
+  .lb-table tr.podium{ background:var(--state-gold-bg); }
+  .lb-table tr.me.podium{ background:linear-gradient(90deg,var(--state-select-bg),var(--state-gold-bg)); }
+  .lb-rank{ font-weight:800; color:var(--ink); width:38px; font-size:15px; }
+  .lb-empty{ color:var(--ink-soft); font-size:14px; padding:30px 18px; text-align:center; border:1px dashed var(--line); border-radius:14px; background:var(--paper-2); }
+  .lb-empty[aria-busy="true"]::before{ content:""; display:inline-block; width:12px; height:12px; margin-right:9px; border:2px solid var(--line); border-top-color:var(--teal); border-radius:50%; animation:lb-spin .7s linear infinite; vertical-align:-2px; }
+  .lb-error{ color:var(--coral); border-color:var(--coral); background:var(--state-coral-bg); }
+  @keyframes lb-spin{ to{ transform:rotate(360deg); } }
+  @media(max-width:620px){
+    .lb-toolbar{ grid-template-columns:1fr 1fr; gap:10px; padding:12px; }
+    .lb-field:first-child{ grid-column:1/-1; }
+    .lb-table-wrap{ overflow:visible; border:0; background:transparent; }
+    .lb-table{ min-width:0; }
+    .lb-table thead{ display:none; }
+    .lb-table,.lb-table tbody,.lb-table tr,.lb-table td{ display:block; width:100%; }
+    .lb-table tr{ position:relative; margin-bottom:10px; padding:12px 12px 10px 54px; border:1px solid var(--line); border-radius:13px; background:var(--surface-raised); }
+    .lb-table tr.podium{ background:var(--state-gold-bg); }
+    .lb-table td{ display:flex; justify-content:space-between; gap:12px; padding:4px 0; border:0; text-align:right; }
+    .lb-table td::before{ content:attr(data-label); color:var(--ink-soft); font-size:11px; font-weight:700; text-align:left; }
+    .lb-table .lb-rank{ position:absolute; left:13px; top:13px; width:30px; height:30px; padding:0; display:grid; place-items:center; border-radius:50%; background:var(--paper-2); color:var(--gold); }
+    .lb-table .lb-rank::before{ content:none; }
+  }
 
   .flag-frame{
     background:var(--navy);
@@ -613,6 +671,118 @@
   .promotion-tier{ font-family:'Fraunces',serif; font-weight:600; font-size:18px; color:var(--ink); margin-top:4px; }
   .promotion-sub{ font-size:12.5px; color:var(--ink-soft); margin-top:6px; }
 
+  /* ---------- DESIGN SYSTEM / ACCESSIBILITE ---------- */
+  :root{
+    --control-radius:12px;
+    --focus-ring:#176B50;
+    --surface-raised:#FFFDF7;
+    --quiz-surface:#E8DEC5;
+  }
+  [data-theme="dark"]{
+    --ink-soft:#BCC5D2;
+    --focus-ring:#70DDB2;
+    --surface-raised:#272F3C;
+    --quiz-surface:#151A23;
+    --disabled-bg:#4B5260;
+  }
+  button, input, select{ font:inherit; }
+  button{ -webkit-tap-highlight-color:transparent; }
+  :is(button,[role="button"],input,select):focus-visible{
+    outline:3px solid var(--focus-ring);
+    outline-offset:3px;
+  }
+  :is(.btn-primary,.btn-ghost,.btn-validate,.leaderboard-btn,.modify-btn,.hint-btn){
+    min-height:46px; border-radius:var(--control-radius); padding:11px 20px;
+    display:inline-flex; align-items:center; justify-content:center; gap:7px;
+    font-family:'Inter',sans-serif; font-size:14px; font-weight:700; line-height:1.2;
+    text-decoration:none; cursor:pointer;
+    transition:transform .15s ease, box-shadow .15s ease, background-color .15s ease, border-color .15s ease, color .15s ease;
+  }
+  :is(.btn-primary,.btn-ghost,.btn-validate,.leaderboard-btn,.modify-btn,.hint-btn):hover:not(:disabled){
+    transform:translateY(-1px); box-shadow:0 6px 16px rgba(20,28,41,.16);
+  }
+  :is(.btn-primary,.btn-ghost,.btn-validate,.leaderboard-btn,.modify-btn,.hint-btn):active:not(:disabled){ transform:translateY(0); box-shadow:none; }
+  :is(.btn-primary,.btn-ghost,.btn-validate,.leaderboard-btn,.modify-btn,.hint-btn):disabled{
+    opacity:.72; cursor:not-allowed; box-shadow:none; transform:none;
+  }
+  .btn-primary{ border:1.5px solid transparent; }
+  .btn-ghost{ background:transparent; border-color:var(--ink); }
+  .btn-validate{ min-width:150px; background:var(--teal); border:1.5px solid transparent; color:#fff; }
+  .leaderboard-btn{ background:var(--state-gold-bg); }
+  .modify-btn,.hint-btn{ min-height:38px; padding:8px 15px; }
+  .game-category-btn,.cont-btn,.mode-btn,.choice-btn,.flag-card{
+    color:var(--ink); box-shadow:0 1px 0 rgba(30,42,60,.04);
+  }
+  :is(.game-category-btn,.cont-btn,.mode-btn,.choice-btn,.flag-card):focus-visible{ outline:3px solid var(--focus-ring); outline-offset:2px; }
+
+  /* Home actions share geometry; color remains meaningful by section. */
+  .ranked-banner,.versus-banner{ box-shadow:0 5px 16px rgba(20,28,41,.10); }
+  .ranked-banner-right .btn-primary,.versus-play-btn{ min-height:44px; padding:10px 16px; }
+  .start-row .btn-primary{ min-width:210px; }
+  .game-category-btn{ min-height:48px; transition:background-color .15s ease,border-color .15s ease,transform .15s ease; }
+  .game-category-btn:hover{ transform:translateY(-1px); border-color:var(--teal); }
+
+  /* Quiz: one contained stage, stronger hierarchy and contrast. */
+  #screen-quiz{ padding:30px; }
+  .quiz-top{ gap:12px; margin-bottom:18px; padding:12px 14px; border:1px solid var(--line); border-radius:14px; background:var(--paper-2); }
+  .stamp{ transform:none; background:var(--state-select-bg); padding:7px 12px; }
+  .progress-track{ height:8px; margin:0; min-width:80px; background:rgba(75,90,112,.25); }
+  .score-tag,.stat-pill{ min-height:30px; display:inline-flex; align-items:center; padding:5px 10px; background:var(--surface-raised); border:1px solid var(--line); border-radius:999px; color:var(--ink); }
+  .question-heading{ margin:0 0 10px; text-align:center; color:var(--ink-soft); font-size:12px; font-weight:800; letter-spacing:.13em; text-transform:uppercase; }
+  .flag-frame{ margin-bottom:22px; min-height:230px; padding:30px; border:1px solid rgba(255,255,255,.12); border-radius:18px; box-shadow:inset 0 1px rgba(255,255,255,.08); }
+  .flag-visual{ box-shadow:0 10px 28px rgba(0,0,0,.34); }
+  .flag-frame:has(.capital-question){ min-height:260px; padding:12px 0 20px; background:transparent; border:0; box-shadow:none; }
+  .flag-visual:has(.capital-question){ max-width:620px; min-height:240px; padding:12px 20px; background:transparent; border:0; border-radius:0; box-shadow:none; overflow:visible; }
+  .capital-question{ gap:22px; }
+  .capital-question::before{ content:"Pays"; color:var(--ink-soft); font-size:11px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; }
+  .flag-visual .capital-question img{ width:min(240px,70vw); height:140px; padding:0; background:transparent; border:0; border-radius:0; box-shadow:none; }
+  .capital-question .capital-prompt,.capital-prompt{ color:var(--ink); line-height:1.1; font-size:clamp(30px,6vw,46px); }
+  .choices{ gap:12px; }
+  .choice-btn{ position:relative; min-height:58px; padding:15px 18px 15px 48px; background:var(--surface-raised); border-color:rgba(75,90,112,.35); }
+  .choice-btn::before{ content:""; position:absolute; left:18px; width:15px; height:15px; border-radius:50%; border:2px solid var(--ink-soft); background:transparent; }
+  .choice-btn:hover:not(:disabled){ border-color:var(--teal); background:var(--state-select-bg); }
+  .choice-btn.selected{ border-color:var(--teal); background:var(--state-select-bg); box-shadow:0 0 0 2px var(--teal) inset; }
+  .choice-btn.selected::before{ border-color:var(--teal); background:var(--teal); box-shadow:inset 0 0 0 3px var(--state-select-bg); }
+  .choice-btn.correct::before{ content:"✓"; display:grid; place-items:center; border-color:var(--teal); background:var(--teal); color:#fff; font-size:10px; }
+  .choice-btn.wrong::before{ content:"×"; display:grid; place-items:center; border-color:var(--coral); background:var(--coral); color:#fff; font-size:13px; }
+  .qcm-validate-row{ margin-top:18px; }
+  .qcm-validate-row .btn-validate{ width:100%; min-height:52px; font-size:16px; }
+  .feedback{ padding:0 2px; }
+
+  @media (max-width:640px){
+    body{ padding:16px 10px 36px; }
+    .brand{ margin:2px 44px 18px 2px; }
+    .card,#screen-quiz{ padding:20px 16px; border-radius:16px; }
+    .quiz-top{ align-items:stretch; flex-wrap:wrap; padding:10px; }
+    .quiz-top .stamp{ order:1; }
+    .quiz-top .quiz-stats{ order:2; flex:1; gap:6px; }
+    .quiz-top .progress-track{ order:3; flex-basis:100%; }
+    .flag-frame{ min-height:190px; padding:20px 14px; margin-bottom:16px; }
+    .flag-frame:has(.capital-question){ min-height:220px; padding:6px 0 14px; }
+    .flag-visual:has(.capital-question){ min-height:210px; padding:8px 4px; }
+    .flag-visual .capital-question img{ width:min(210px,72vw); height:120px; }
+    .home-top-row,.pseudo-row,.type-row{ flex-wrap:wrap; }
+    .pseudo-row > input,.type-row > input{ flex-basis:100%; }
+    .pseudo-row > button,.type-row > button{ width:100%; min-height:48px; }
+    .ranked-banner-right{ width:100%; align-items:stretch; }
+    .ranked-format-note{ text-align:left; }
+    .ranked-banner-right > div:last-child{ justify-content:stretch !important; }
+    .ranked-banner-right .btn-primary{ flex:1; }
+    .start-row .btn-primary{ width:100%; }
+  }
+  @media (max-width:480px){
+    .choices{ grid-template-columns:1fr; gap:9px; }
+    .choice-btn{ min-height:54px; }
+    .btn-validate{ padding:11px 18px; font-size:15px; border-radius:var(--control-radius); }
+    .player-badge{ align-items:flex-start; }
+    .player-badge > div{ width:100%; }
+    .leaderboard-btn{ flex:1; padding:9px 10px; }
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{ scroll-behavior:auto !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+    :is(.cont-btn,.mode-btn,.choice-btn,.flag-card,.theme-toggle):hover{ transform:none; }
+  }
+
 </style>
 </head>
 <body>
@@ -685,9 +855,9 @@
         </div>
       </div>
       <div class="ranked-banner-right">
-        <div class="ranked-format-note">Format fixe : Monde entier · 20 drapeaux · Saisie libre</div>
+        <div class="ranked-format-note" id="ranked-format-note">Format fixe : Monde entier · 20 questions · Saisie libre</div>
         <div class="ranked-format-note" id="ranked-daily-note">5 parties classées par jour</div>
-        <button type="button" class="btn-primary ranked-play-btn" id="btn-start-ranked">🏆 Partie classée</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button type="button" class="btn-primary ranked-play-btn" id="btn-start-ranked">🏳️ Classé drapeaux</button><button type="button" class="btn-primary ranked-play-btn" id="btn-start-ranked-capitals">🏛️ Classé capitales</button></div>
       </div>
     </div>
 
@@ -695,14 +865,15 @@
       <div class="versus-banner-left">
         <div class="versus-icon">⚔️</div>
         <div>
-          <div class="versus-title">Mode Versus 1v1</div>
-          <div class="versus-sub">Défie un ami en duel, en direct</div>
+          <div class="versus-title">Mode Versus multijoueur</div>
+          <div class="versus-sub">Affronte 2 à 8 amis, en direct</div>
         </div>
       </div>
-      <button type="button" class="btn-primary versus-play-btn" id="btn-open-versus">⚔️ Jouer en 1v1</button>
+      <button type="button" class="btn-primary versus-play-btn" id="btn-open-versus">⚔️ Jouer en versus</button>
     </div>
 
-    <p class="subtitle">Choisis un continent à explorer, puis une façon de jouer.</p>
+    <p class="subtitle">Choisis ce que tu veux réviser, un continent, puis une façon de jouer.</p>
+    <div class="game-categories" aria-label="Sujet du quiz"><button type="button" class="game-category-btn selected" data-category="flags">🏳️ Drapeaux</button><button type="button" class="game-category-btn" data-category="capitals">🏛️ Capitales</button></div>
 
     <div class="section-label">1 — Choisis ta destination</div>
     <div class="continents" id="continent-list"></div>
@@ -771,7 +942,7 @@
     <button class="top-link" id="btn-quit">← Changer de continent / mode</button>
     <div class="quiz-top">
       <div class="stamp" id="cont-label">Afrique</div>
-      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="progress-track" role="progressbar" aria-label="Progression du quiz" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-fill" id="progress-fill"></div></div>
       <div class="quiz-stats">
         <div class="stat-pill" id="timer-tag">⏱ 0:00</div>
         <div class="stat-pill" id="mistakes-tag">❌ 0 faute</div>
@@ -779,6 +950,7 @@
       </div>
     </div>
 
+    <p class="question-heading" id="question-heading">Identifie ce drapeau</p>
     <div class="flag-frame"><div id="flag-visual" class="flag-visual"></div></div>
 
     <!-- mode QCM -->
@@ -799,7 +971,7 @@
       </div>
     </div>
 
-    <div class="feedback" id="feedback"></div>
+    <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
 
     <div class="next-row">
       <button class="btn-primary hidden" id="btn-next">Question suivante →</button>
@@ -827,18 +999,17 @@
     <button class="top-link" id="btn-leaderboard-back">← Retour</button>
     <h2 style="font-size:22px; margin-bottom:6px;">🏆 Classement</h2>
     <p class="subtitle">Les meilleurs scores, classés par précision puis par rapidité.</p>
-    <div class="lb-tabs" id="lb-tabs">
-      <button type="button" class="lb-tab selected" data-tab="casual">Parties</button>
-      <button type="button" class="lb-tab" data-tab="ranked">🏆 Classé</button>
+    <div class="lb-tabs" id="lb-tabs" role="tablist" aria-label="Type de classement">
+      <button type="button" class="lb-tab selected" data-tab="casual" role="tab" aria-selected="true">Parties</button>
+      <button type="button" class="lb-tab" data-tab="ranked" role="tab" aria-selected="false" tabindex="-1">🏆 Classé</button>
     </div>
-    <div id="lb-casual-panel">
-      <div class="lb-filters" id="lb-filters"></div>
-      <div class="lb-filters" id="lb-filters-count"></div>
-      <div id="lb-content"></div>
+    <div class="lb-toolbar" aria-label="Filtres du classement">
+      <div class="lb-field"><label for="lb-category-select">Catégorie</label><select id="lb-category-select" class="lb-select"><option value="flags">🏳️ Drapeaux</option><option value="capitals">🏛️ Capitales</option></select></div>
+      <div class="lb-field lb-casual-filter"><label for="lb-region-select">Région</label><select id="lb-region-select" class="lb-select"><option>Europe</option><option>Afrique</option><option>Amérique</option><option>Asie</option><option>Océanie</option><option>Monde entier</option></select></div>
+      <div class="lb-field lb-casual-filter"><label for="lb-count-select">Questions</label><select id="lb-count-select" class="lb-select"><option value="Tous">Tous les formats</option><option value="complete">Quiz complet</option><option value="10">10 questions</option><option value="20">20 questions</option><option value="30">30 questions</option></select></div>
     </div>
-    <div id="lb-ranked-panel" class="hidden">
-      <div id="lb-ranked-content"></div>
-    </div>
+    <div id="lb-casual-panel"><div id="lb-content" aria-live="polite"></div></div>
+    <div id="lb-ranked-panel" class="hidden"><div id="lb-ranked-content" aria-live="polite"></div></div>
   </div>
 
   <!-- ECRAN 5 : HISTORIQUE -->
@@ -852,13 +1023,23 @@
   <!-- ECRAN 6 : VERSUS - LOBBY (créer / rejoindre) -->
   <div id="screen-versus-lobby" class="card hidden">
     <button class="top-link" id="btn-versus-lobby-back">← Retour</button>
-    <h2 style="font-size:22px; margin-bottom:6px;">⚔️ Mode Versus 1v1</h2>
-    <p class="subtitle">Vies de 1000 PV chacun. Bonne réponse : -100 PV à l'adversaire, +50 PV pour toi. Mauvaise réponse : -25 PV pour toi.</p>
+    <h2 style="font-size:22px; margin-bottom:6px;">⚔️ Mode Versus multijoueur</h2>
+    <p class="subtitle">1000 PV par joueur. Bonne réponse : +50 PV pour toi et -100 PV aux autres. Mauvaise réponse : -25 PV.</p>
 
     <div class="versus-lobby-grid">
       <div class="versus-lobby-card">
         <h3>Créer un salon</h3>
-        <p class="subtitle" style="margin:6px 0 14px;">Génère un code à partager avec ton adversaire.</p>
+        <p class="subtitle" style="margin:6px 0 14px;">Choisis la capacité puis partage l'invitation.</p>
+        <div class="versus-options">
+          <label>À deviner<select id="versus-category" class="pseudo-input"><option value="flags">🏳️ Drapeaux</option><option value="capitals">🏛️ Capitales</option></select></label>
+          <label>Réponses<select id="versus-answer-mode" class="pseudo-input"><option value="free">⌨️ Saisie libre</option><option value="mcq">☑️ QCM</option></select></label>
+          <label>Région<select id="versus-continent" class="pseudo-input"><option>Monde entier</option><option>Afrique</option><option>Europe</option><option>Asie</option><option>Amérique</option><option>Océanie</option></select></label>
+        </div>
+        <label class="fastmode-toggle-label" style="margin:0 0 12px;">Capacité
+          <select id="versus-capacity" class="pseudo-input" style="padding:8px;">
+            <option>2</option><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option><option>8</option>
+          </select> joueurs
+        </label>
         <button type="button" class="btn-primary" id="btn-versus-create" style="width:100%;">Créer mon salon</button>
       </div>
       <div class="versus-lobby-card">
@@ -876,41 +1057,40 @@
   <!-- ECRAN 7 : VERSUS - SALLE D'ATTENTE -->
   <div id="screen-versus-wait" class="card hidden">
     <button class="top-link" id="btn-versus-wait-back">← Annuler</button>
-    <h2 style="font-size:22px; margin-bottom:6px;">⏳ En attente d'un adversaire…</h2>
-    <p class="subtitle">Partage ce code avec la personne que tu veux affronter :</p>
+    <h2 style="font-size:22px; margin-bottom:6px;">⏳ Salle d'attente</h2>
+    <p class="subtitle">Partage ce code ou le lien d'invitation :</p>
     <div class="versus-code-display" id="versus-code-display">XXXXX</div>
-    <p class="subtitle" style="text-align:center;">La partie démarre automatiquement dès qu'elle rejoint le salon.</p>
+    <div class="result-actions"><button type="button" class="btn-ghost" id="btn-versus-copy">🔗 Copier le lien</button><button type="button" class="btn-primary hidden" id="btn-versus-start">Démarrer la partie</button></div>
+    <p id="versus-room-settings" class="subtitle" style="text-align:center;"></p>
+    <div class="section-label">Joueurs présents</div><div id="versus-wait-roster"></div>
+    <div id="versus-wait-msg" class="msg-error hidden"></div>
   </div>
 
   <!-- ECRAN 8 : VERSUS - COMBAT -->
   <div id="screen-versus-battle" class="card hidden">
-    <div class="versus-hp-row">
-      <div class="versus-hp-block">
-        <div class="versus-hp-label">Toi</div>
-        <div class="versus-hp-track"><div class="versus-hp-fill versus-hp-self" id="versus-self-hp-fill"></div></div>
-        <div class="versus-hp-value" id="versus-self-hp-value">1000 / 1000</div>
-      </div>
-      <div class="versus-vs">VS</div>
-      <div class="versus-hp-block">
-        <div class="versus-hp-label" id="versus-opp-label">Adversaire</div>
-        <div class="versus-hp-track"><div class="versus-hp-fill versus-hp-opp" id="versus-opp-hp-fill"></div></div>
-        <div class="versus-hp-value" id="versus-opp-hp-value">1000 / 1000</div>
-      </div>
-    </div>
+    <button class="top-link" id="btn-versus-battle-back">← Quitter la partie</button>
+    <div class="versus-heading"><div><span class="versus-eyebrow">Arène multijoueur</span><h2>Chaque réponse compte.</h2></div><span class="versus-live" id="versus-alive-count">En jeu</span></div>
+    <div id="versus-hp-roster" class="versus-roster"></div>
+    <p id="versus-spectating" class="subtitle hidden" style="text-align:center;">💀 Tu es éliminé·e — tu peux regarder la fin du match.</p>
 
+    <div class="versus-arena">
     <div class="flag-frame"><div id="versus-flag-visual" class="flag-visual"></div></div>
 
-    <div class="type-row">
+    <div id="versus-mcq-area" class="choices versus-mcq-area hidden"></div>
+    <div class="type-row" id="versus-type-row">
       <input type="text" id="versus-type-input" class="type-input" placeholder="Nom du pays…" autocomplete="off">
       <button type="button" class="btn-validate" id="versus-btn-validate">Valider</button>
     </div>
-    <div class="feedback" id="versus-feedback"></div>
+    <div class="versus-input-hint">Entrée pour valider · Bonne réponse +50 PV / −100 aux adversaires</div>
+    <div class="feedback" id="versus-feedback" role="status"></div>
+    </div>
   </div>
 
   <!-- ECRAN 9 : VERSUS - RESULTAT -->
   <div id="screen-versus-result" class="card hidden">
     <div class="result-badge" id="versus-result-badge">🏆</div>
     <div class="result-msg" id="versus-result-msg"></div>
+    <div id="versus-result-roster"></div>
     <div class="result-actions">
       <button class="btn-primary" id="btn-versus-replay">Nouveau salon</button>
       <button class="btn-ghost" id="btn-versus-home">Retour à l'accueil</button>
@@ -930,6 +1110,7 @@
   </div>
 </div>
 
+<script src="capitals.js"></script>
 <script>
 /* ============ DONNÉES : pays & drapeaux, classés par continent (source Wikimini) ============ */
 const DATA = {
@@ -1243,11 +1424,20 @@ let state = {
   flagCount: null,
   pendingChoice: null,
   ranked: false,
+  category: 'flags',
   answersLog: []
 };
 
 let selectedContinent = null;
 let selectedMode = null;
+let selectedCategory = 'flags';
+
+document.querySelectorAll('.game-category-btn').forEach(btn=>btn.addEventListener('click', ()=>{
+  selectedCategory = btn.dataset.category;
+  document.querySelectorAll('.game-category-btn').forEach(b=>b.classList.toggle('selected', b===btn));
+  document.querySelectorAll('.cont-btn .count').forEach(el=>{ el.textContent = el.textContent.replace(/drapeaux|capitales/g, selectedCategory==='capitals'?'capitales':'drapeaux'); });
+  refreshRankedBadge();
+}));
 
 /* ============ UTILITAIRES ============ */
 function shuffle(arr){
@@ -1513,6 +1703,7 @@ function stopTimer(){
 /* ============ LANCEMENT DU QUIZ ============ */
 function startQuiz(){
   state.ranked = false;
+  state.category = selectedCategory;
   state.continent = selectedContinent;
   state.mode = selectedMode;
   const useCount = document.getElementById('flagcount-toggle').checked;
@@ -1537,8 +1728,10 @@ function startQuiz(){
 }
 
 /* ============ MODE CLASSE : format fixe, Monde entier / 20 drapeaux / QCM ============ */
-function startRankedQuiz(){
+function startRankedQuiz(category = 'flags'){
   state.ranked = true;
+  state.category = category;
+  selectedCategory = category;
   state.divisionBeforeGame = currentRankedDivision;
   selectedContinent = 'Monde entier';
   selectedMode = 'saisie';
@@ -1555,31 +1748,54 @@ function startRankedQuiz(){
   screenHome.classList.add('hidden');
   screenResult.classList.add('hidden');
   screenQuiz.classList.remove('hidden');
-  document.getElementById('cont-label').textContent = '🏆 Partie classée · Monde entier · 20 drapeaux · Saisie';
+  document.getElementById('cont-label').textContent = `🏆 Partie classée · Monde entier · 20 ${category==='capitals'?'capitales':'drapeaux'} · Saisie`;
   document.getElementById('mistakes-tag').textContent = '❌ 0 faute';
   startTimer();
   loadQuestion();
 }
-document.getElementById('btn-start-ranked').addEventListener('click', startRankedQuiz);
+document.getElementById('btn-start-ranked').addEventListener('click', ()=>startRankedQuiz('flags'));
+document.getElementById('btn-start-ranked-capitals').addEventListener('click', ()=>startRankedQuiz('capitals'));
+
+function renderCapitalQuestion(visual, country, image){
+  const question = document.createElement('div');
+  question.className = 'capital-question';
+  if(image){
+    const flag = document.createElement('img');
+    flag.src = image;
+    flag.alt = `Drapeau : ${country}`;
+    flag.onerror = ()=>flag.remove();
+    question.appendChild(flag);
+  }
+  const name = document.createElement('div');
+  name.className = 'capital-prompt';
+  name.textContent = country;
+  question.appendChild(name);
+  visual.appendChild(question);
+}
 
 function loadQuestion(){
   state.answered = false;
   state.pendingChoice = null;
-  const [name, img] = state.order[state.index];
+  const [country, img] = state.order[state.index];
+  const name = state.category === 'capitals' ? CAPITALS[country] : country;
   const visual = document.getElementById('flag-visual');
   visual.innerHTML = '';
-  const imgEl = document.createElement('img');
-  imgEl.src = img;
-  imgEl.alt = 'Drapeau à deviner';
-  imgEl.onerror = function(){
-    visual.innerHTML = `<div class="flag-fallback">🏳️<span>${name}</span></div>`;
-  };
-  visual.appendChild(imgEl);
+  document.getElementById('question-heading').textContent = state.category === 'capitals'
+    ? 'Quelle est la capitale de ce pays ?'
+    : 'À quel pays appartient ce drapeau ?';
+  if(state.category === 'capitals'){
+    renderCapitalQuestion(visual, country, img);
+  } else {
+    const imgEl = document.createElement('img'); imgEl.src = img; imgEl.alt = 'Drapeau à deviner';
+    imgEl.onerror = function(){ visual.innerHTML = `<div class="flag-fallback">🏳️<span>${country}</span></div>`; }; visual.appendChild(imgEl);
+  }
   document.getElementById('feedback').textContent = '';
   document.getElementById('feedback').className = 'feedback';
   document.getElementById('btn-next').classList.add('hidden');
   document.getElementById('score-tag').textContent = `Score : ${state.score}/${state.index}`;
-  document.getElementById('progress-fill').style.width = `${(state.index/state.order.length)*100}%`;
+  const progressPercent = Math.round((state.index/state.order.length)*100);
+  document.getElementById('progress-fill').style.width = `${progressPercent}%`;
+  document.querySelector('#screen-quiz .progress-track').setAttribute('aria-valuenow', progressPercent);
 
   resetHint();
 
@@ -1595,11 +1811,13 @@ function loadQuestion(){
     qcmValidateRow.classList.toggle('hidden', fast);
     const btnQcmValidate = document.getElementById('btn-qcm-validate');
     btnQcmValidate.disabled = true;
-    const wrongs = pickWrongAnswers(name, state.pool, 3);
+    const wrongs = state.category === 'capitals' ? shuffle(state.pool.filter(c=>c[0]!==country).map(c=>CAPITALS[c[0]])).slice(0,3) : pickWrongAnswers(name, state.pool, 3);
     const options = shuffle([name, ...wrongs]);
     options.forEach(opt=>{
       const b = document.createElement('button');
       b.className = 'choice-btn';
+      b.type = 'button';
+      b.setAttribute('aria-pressed', 'false');
       b.textContent = opt;
       b.addEventListener('click', ()=>selectQcmChoice(b, opt, name, fast));
       qcmArea.appendChild(b);
@@ -1625,8 +1843,12 @@ function selectQcmChoice(btn, chosen, correct, fast){
     validateQcm(btn, chosen, correct);
     return;
   }
-  document.querySelectorAll('#qcm-area .choice-btn').forEach(b=>b.classList.remove('selected'));
+  document.querySelectorAll('#qcm-area .choice-btn').forEach(b=>{
+    b.classList.remove('selected');
+    b.setAttribute('aria-pressed', 'false');
+  });
   btn.classList.add('selected');
+  btn.setAttribute('aria-pressed', 'true');
   state.pendingChoice = {btn, chosen, correct};
   document.getElementById('btn-qcm-validate').disabled = false;
 }
@@ -1719,10 +1941,10 @@ function isLetterRearrangement(a, b){
   if(sa === sb) return false; // deja identique, pas la peine de passer par ce cas
   return sa.split('').sort().join('') === sb.split('').sort().join('');
 }
-function isAnswerCorrect(userInput, correctName){
+function isAnswerCorrect(userInput, correctName, extraAliases){
   const userNorm = normalize(userInput);
   if(!userNorm) return {ok:false, dist:null};
-  const candidates = [correctName, ...(ALIASES[correctName] || [])];
+  const candidates = [correctName, ...(extraAliases || ALIASES[correctName] || [])];
   let bestDist = Infinity;
   for(const candidate of candidates){
     const candNorm = normalize(candidate);
@@ -1768,9 +1990,10 @@ function submitTyped(){
   if(state.answered) return;
   state.answered = true;
   if(hintTimer){ clearTimeout(hintTimer); hintTimer = null; }
-  const [name] = state.order[state.index];
+  const [country] = state.order[state.index];
+  const name = state.category === 'capitals' ? CAPITALS[country] : country;
   const input = document.getElementById('type-input');
-  const result = isAnswerCorrect(input.value, name);
+  const result = isAnswerCorrect(input.value, name, state.category === 'capitals' ? (CAPITAL_ALIASES[name] || []) : null);
   const isCorrect = result.ok;
 
   input.readOnly = true;
@@ -1817,7 +2040,7 @@ function showResult(){
   document.getElementById('result-score').textContent = `${state.score}/${total}`;
   const pct = Math.round((state.score/total)*100);
   let msg;
-  if(pct === 100) msg = "Parfait ! Tu connais tous les drapeaux de cette catégorie.";
+  if(pct === 100) msg = state.category==='capitals' ? "Parfait ! Tu connais toutes les capitales de cette catégorie." : "Parfait ! Tu connais tous les drapeaux de cette catégorie.";
   else if(pct >= 75) msg = "Très bon score, continue comme ça !";
   else if(pct >= 50) msg = "Pas mal ! Encore un peu d'entraînement.";
   else msg = "Retente ta chance, tu vas progresser vite !";
@@ -1844,6 +2067,7 @@ function showResult(){
       points: points,
       flagCount: state.flagCount || null,
       details: state.answersLog,
+      category: state.category,
       date: new Date().toISOString()
     });
   }
@@ -1896,7 +2120,7 @@ document.getElementById('btn-toggle-summary').addEventListener('click', ()=>{
 });
 
 document.getElementById('btn-replay').addEventListener('click', ()=>{
-  if(state.ranked){ startRankedQuiz(); } else { startQuiz(); }
+  if(state.ranked){ startRankedQuiz(state.category); } else { startQuiz(); }
 });
 document.getElementById('btn-home').addEventListener('click', backHome);
 document.getElementById('btn-quit').addEventListener('click', async ()=>{
@@ -2051,16 +2275,16 @@ async function markTodayPlayed(){
 /* Repli local (hors API) : suit division/points/serie/limite quotidienne sur cet appareil uniquement */
 async function appendLocalRankedHistory(entry){
   try{
-    const raw = await storeGet('ranked_history_local', false);
+    const raw = await storeGet(`ranked_history_local_${state.category}`, false);
     const list = raw ? JSON.parse(raw) : [];
     list.push(entry);
     const trimmed = list.slice(-10);
-    await storeSet('ranked_history_local', JSON.stringify(trimmed), false);
+    await storeSet(`ranked_history_local_${state.category}`, JSON.stringify(trimmed), false);
   }catch(e){ /* l'historique local est un bonus, on ne bloque jamais le jeu */ }
 }
 
 async function computeLocalRankedGain(score, total){
-  const raw = await storeGet('ranked_local', false);
+  const raw = await storeGet(`ranked_local_${state.category}`, false);
   let local = { division:0, points:0, streak:0, gamesToday:0, gamesTodayDate: todayKey() };
   if(raw){
     try{ local = Object.assign(local, JSON.parse(raw)); }catch(e){}
@@ -2072,7 +2296,7 @@ async function computeLocalRankedGain(score, total){
   }
 
   if(local.gamesToday >= RANKED_DAILY_LIMIT){
-    await storeSet('ranked_local', JSON.stringify(local), false);
+    await storeSet(`ranked_local_${state.category}`, JSON.stringify(local), false);
     await appendLocalRankedHistory({
       created_at: new Date().toISOString(), type:'ranked', label:'Classé', mode:'saisie',
       score, total, points:0, division:local.division, daily_limit_reached:1, details: state.answersLog
@@ -2087,7 +2311,7 @@ async function computeLocalRankedGain(score, total){
   local.points = applied.points;
   local.streak = fp.newStreak;
   local.gamesToday += 1;
-  await storeSet('ranked_local', JSON.stringify(local), false);
+  await storeSet(`ranked_local_${state.category}`, JSON.stringify(local), false);
   await appendLocalRankedHistory({
     created_at: new Date().toISOString(), type:'ranked', label:'Classé', mode:'saisie',
     score, total, points:fp.gained, division:applied.division, daily_limit_reached:0, details: state.answersLog
@@ -2103,7 +2327,7 @@ async function submitRanked(score, total){
       method: 'POST',
       cache: 'no-store',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pseudo: currentPseudo || 'Joueur', score, total, details: state.answersLog })
+      body: JSON.stringify({ pseudo: currentPseudo || 'Joueur', score, total, category: state.category, details: state.answersLog })
     });
     if(res.ok){
       const data = await res.json();
@@ -2130,7 +2354,7 @@ async function forfeitRankedGame(){
       method: 'POST',
       cache: 'no-store',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pseudo: currentPseudo || 'Joueur', score, total, details: state.answersLog })
+      body: JSON.stringify({ pseudo: currentPseudo || 'Joueur', score, total, category: state.category, details: state.answersLog })
     });
     if(!res.ok) throw new Error('api indisponible');
   }catch(e){
@@ -2234,14 +2458,14 @@ document.getElementById('promotion-overlay').addEventListener('click', ()=>{
 async function refreshRankedBadge(){
   let data = null;
   try{
-    const res = await fetch('/api/ranked/player?pseudo=' + encodeURIComponent(currentPseudo || 'Joueur'), { cache: 'no-store' });
+    const res = await fetch('/api/ranked/player?pseudo=' + encodeURIComponent(currentPseudo || 'Joueur') + '&category=' + encodeURIComponent(selectedCategory), { cache: 'no-store' });
     if(res.ok){
       const json = await res.json();
       if(json && json.ok) data = json;
     }
   }catch(e){}
   if(!data){
-    const raw = await storeGet('ranked_local', false);
+    const raw = await storeGet(`ranked_local_${selectedCategory}`, false);
     if(raw){
       try{ data = JSON.parse(raw); }catch(e){}
     }
@@ -2425,6 +2649,7 @@ async function finalizePseudo(pseudo){
   screenPseudo.classList.add('hidden');
   screenHome.classList.remove('hidden');
   refreshRankedBadge();
+  if(typeof invitedRoom !== 'undefined' && invitedRoom) openVersusLobby();
 }
 
 document.getElementById('btn-pseudo-next').addEventListener('click', checkPseudoStatus);
@@ -2443,8 +2668,10 @@ document.getElementById('btn-change-pseudo').addEventListener('click', ()=>{
 });
 
 async function getLeaderboard(continentFilter, countFilter){
+  let apiFailed = false;
   try{
     const params = new URLSearchParams();
+    params.set('category', lbCategory);
     if(continentFilter && continentFilter !== 'Tous') params.set('continent', continentFilter);
     if(countFilter !== undefined && countFilter !== 'Tous'){
       params.set('flagCount', countFilter === null ? 'null' : String(countFilter));
@@ -2453,20 +2680,21 @@ async function getLeaderboard(continentFilter, countFilter){
     const res = await fetch('/api/leaderboard' + qs, { headers: { 'Accept': 'application/json' } });
     if(res.ok){
       const data = await res.json();
-      if(data && data.ok && Array.isArray(data.entries)) return data.entries;
+      if(data && data.ok && Array.isArray(data.entries)) return { entries:data.entries, error:false };
     }
-  }catch(e){ /* API indisponible (test en local, aperçu Claude...) -> repli ci-dessous */ }
+    apiFailed = true;
+  }catch(e){ apiFailed = true; /* API indisponible -> repli ci-dessous */ }
 
   const raw = await storeGet('leaderboard', true);
-  if(!raw) return [];
+  if(!raw) return { entries:[], error:apiFailed };
   try{
-    let list = JSON.parse(raw);
+    let list = JSON.parse(raw).filter(e=>(e.category || 'flags') === lbCategory);
     if(continentFilter && continentFilter !== 'Tous') list = list.filter(e=>e.continent === continentFilter);
     if(countFilter !== undefined && countFilter !== 'Tous'){
       list = list.filter(e => (e.flagCount || null) === countFilter);
     }
-    return list;
-  }catch(e){ return []; }
+    return { entries:list, error:false };
+  }catch(e){ return { entries:[], error:true }; }
 }
 async function saveLeaderboardEntry(entry){
   try{
@@ -2489,40 +2717,27 @@ async function saveLeaderboardEntry(entry){
 
 let lbFilter = 'Europe';
 let lbCountFilter = 'Tous';
-
-function buildLbFilters(){
-  const el = document.getElementById('lb-filters');
-  el.innerHTML = '';
-  const options = ['Europe', 'Afrique', 'Amérique', 'Asie', 'Océanie', 'Monde entier'];
-  options.forEach(opt=>{
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'lb-filter-btn' + (opt===lbFilter ? ' selected' : '');
-    b.textContent = opt;
-    b.addEventListener('click', ()=>{ lbFilter = opt; renderLeaderboard(); });
-    el.appendChild(b);
-  });
-
-  const elCount = document.getElementById('lb-filters-count');
-  elCount.innerHTML = '';
-  const countOptions = [['Tous','Tous les formats'], [null,'Complet'], [10,'10 drapeaux'], [20,'20 drapeaux'], [30,'30 drapeaux']];
-  countOptions.forEach(([val,label])=>{
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'lb-filter-btn' + (val===lbCountFilter ? ' selected' : '');
-    b.textContent = label;
-    b.addEventListener('click', ()=>{ lbCountFilter = val; renderLeaderboard(); });
-    elCount.appendChild(b);
-  });
-}
+let lbCategory = 'flags';
+document.getElementById('lb-category-select').addEventListener('change', e=>{
+  lbCategory = e.target.value;
+  const rankedOpen = document.querySelector('.lb-tab[data-tab="ranked"]').classList.contains('selected');
+  rankedOpen ? renderRankedLeaderboard() : renderLeaderboard();
+});
+document.getElementById('lb-region-select').addEventListener('change', e=>{ lbFilter=e.target.value; renderLeaderboard(); });
+document.getElementById('lb-count-select').addEventListener('change', e=>{
+  lbCountFilter = e.target.value === 'complete' ? null : (e.target.value === 'Tous' ? 'Tous' : Number(e.target.value));
+  renderLeaderboard();
+});
 
 async function renderLeaderboard(){
-  buildLbFilters();
   const content = document.getElementById('lb-content');
-  content.innerHTML = '<div class="lb-empty">Chargement…</div>';
-  let list = await getLeaderboard(lbFilter, lbCountFilter);
+  content.innerHTML = '<div class="lb-empty" aria-busy="true">Chargement du classement…</div>';
+  const result = await getLeaderboard(lbFilter, lbCountFilter);
+  let list = result.entries;
   if(list.length === 0){
-    content.innerHTML = "<div class=\"lb-empty\">Aucun score enregistré pour l'instant. Termine un quiz pour apparaître ici !</div>";
+    content.innerHTML = result.error
+      ? '<div class="lb-empty lb-error" role="alert">Impossible de charger le classement. Vérifie ta connexion puis réessaie.</div>'
+      : "<div class=\"lb-empty\">Aucun score pour ces filtres. Termine un quiz pour ouvrir le classement !</div>";
     return;
   }
   list.sort((a,b)=>{
@@ -2531,23 +2746,24 @@ async function renderLeaderboard(){
     return (a.seconds||0) - (b.seconds||0);
   });
   const top = list.slice(0,50);
-  let html = '<table class="lb-table"><thead><tr>' +
+  let html = '<div class="lb-table-wrap"><table class="lb-table"><thead><tr>' +
     '<th>#</th><th>Pseudo</th><th>Catégorie</th><th>Mode</th><th>Score</th><th>Fautes</th><th>Temps</th><th>Points</th>' +
     '</tr></thead><tbody>';
   top.forEach((e,i)=>{
     const isMe = e.pseudo === currentPseudo;
-    html += `<tr class="${isMe?'me':''}">` +
-      `<td class="lb-rank">${i+1}</td>` +
-      `<td>${escapeHtml(e.pseudo)}</td>` +
-      `<td>${escapeHtml(e.continent)}${e.flagCount?` (${e.flagCount})`:''}</td>` +
-      `<td>${e.mode==='qcm'?'4 réponses':'Saisie'}</td>` +
-      `<td>${e.score}/${e.total}</td>` +
-      `<td>${e.mistakes}</td>` +
-      `<td>${formatTime(e.seconds)}</td>` +
-      `<td>${e.points ?? 0}</td>` +
+    const medal = ['🥇','🥈','🥉'][i] || (i+1);
+    html += `<tr class="${isMe?'me ':''}${i<3?'podium':''}">` +
+      `<td class="lb-rank" data-label="Rang">${medal}</td>` +
+      `<td data-label="Pseudo"><strong>${escapeHtml(e.pseudo)}</strong>${isMe?' · toi':''}</td>` +
+      `<td data-label="Catégorie">${escapeHtml(e.continent)}${e.flagCount?` (${e.flagCount})`:''}</td>` +
+      `<td data-label="Mode">${e.mode==='qcm'?'4 réponses':'Saisie'}</td>` +
+      `<td data-label="Score">${e.score}/${e.total}</td>` +
+      `<td data-label="Fautes">${e.mistakes}</td>` +
+      `<td data-label="Temps">${formatTime(e.seconds)}</td>` +
+      `<td data-label="Points"><strong>${e.points ?? 0}</strong></td>` +
       `</tr>`;
   });
-  html += '</tbody></table>';
+  html += '</tbody></table></div>';
   content.innerHTML = html;
 }
 function escapeHtml(str){
@@ -2561,10 +2777,19 @@ function openLeaderboard(fromScreen){
   screenLeaderboard.classList.remove('hidden');
   lbFilter = 'Europe';
   lbCountFilter = 'Tous';
+  document.getElementById('lb-category-select').value = lbCategory;
+  document.getElementById('lb-region-select').value = lbFilter;
+  document.getElementById('lb-count-select').value = 'Tous';
   document.querySelectorAll('.lb-tab').forEach(t=>t.classList.remove('selected'));
   document.querySelector('.lb-tab[data-tab="casual"]').classList.add('selected');
   document.getElementById('lb-casual-panel').classList.remove('hidden');
   document.getElementById('lb-ranked-panel').classList.add('hidden');
+  document.querySelectorAll('.lb-casual-filter').forEach(field=>field.classList.remove('hidden'));
+  document.querySelectorAll('.lb-tab').forEach(tab=>{
+    const active = tab.dataset.tab === 'casual';
+    tab.setAttribute('aria-selected', String(active));
+    tab.setAttribute('tabindex', active ? '0' : '-1');
+  });
   renderLeaderboard();
 }
 document.getElementById('btn-open-leaderboard').addEventListener('click', ()=>openLeaderboard(screenHome));
@@ -2581,6 +2806,11 @@ document.querySelectorAll('.lb-tab').forEach(tab=>{
     const which = tab.dataset.tab;
     document.getElementById('lb-casual-panel').classList.toggle('hidden', which!=='casual');
     document.getElementById('lb-ranked-panel').classList.toggle('hidden', which!=='ranked');
+    document.querySelectorAll('.lb-casual-filter').forEach(field=>field.classList.toggle('hidden', which==='ranked'));
+    document.querySelectorAll('.lb-tab').forEach(t=>{
+      t.setAttribute('aria-selected', String(t===tab));
+      t.setAttribute('tabindex', t===tab ? '0' : '-1');
+    });
     if(which==='ranked') renderRankedLeaderboard();
   });
 });
@@ -2621,7 +2851,7 @@ async function fetchHistory(pseudo){
     if(raw){
       const list = JSON.parse(raw).filter(e=>e.pseudo === pseudo);
       list.forEach(e=>local.push({
-        created_at: e.date, type:'casual', label: e.continent, mode: e.mode,
+        created_at: e.date, type:'casual', category:e.category || 'flags', label: e.continent, mode: e.mode,
         score: e.score, total: e.total, points: e.points, division: null, details: e.details
       }));
     }
@@ -2655,7 +2885,8 @@ async function renderHistory(){
   el.innerHTML = '';
   history.forEach((e, idx)=>{
     const isRanked = e.type === 'ranked';
-    const modeLabel = isRanked ? 'Classé · Saisie' : (e.mode==='qcm' ? '4 réponses' : 'Saisie');
+    const subject = (e.category || 'flags') === 'capitals' ? 'Capitales' : 'Drapeaux';
+    const modeLabel = isRanked ? `Classé · ${subject}` : `${e.mode==='qcm' ? '4 réponses' : 'Saisie'} · ${subject}`;
     const label = isRanked ? '🏆 Classé' : (e.label || '');
     const pointsLabel = isRanked ? `${e.points >= 0 ? '+' : ''}${e.points} FP${e.daily_limit_reached ? ' (limite atteinte)' : ''}` : `${e.points ?? 0} pts`;
 
@@ -2694,35 +2925,40 @@ async function renderHistory(){
 
 async function renderRankedLeaderboard(){
   const el = document.getElementById('lb-ranked-content');
-  el.innerHTML = '<div class="lb-empty">Chargement…</div>';
+  el.innerHTML = '<div class="lb-empty" aria-busy="true">Chargement du classement classé…</div>';
   let list = [];
+  let requestFailed = false;
   try{
-    const res = await fetch('/api/ranked/leaderboard');
+    const res = await fetch('/api/ranked/leaderboard?category=' + encodeURIComponent(lbCategory));
     if(res.ok){
       const data = await res.json();
       if(data && data.ok && Array.isArray(data.players)) list = data.players;
-    }
-  }catch(e){}
+      else requestFailed = true;
+    } else requestFailed = true;
+  }catch(e){ requestFailed = true; }
   if(list.length === 0){
-    el.innerHTML = "<div class=\"lb-empty\">Classement classé mondial indisponible pour le moment (nécessite que le site soit déployé avec son API).</div>";
+    el.innerHTML = requestFailed
+      ? '<div class="lb-empty lb-error" role="alert">Impossible de charger le classement classé. Réessaie dans un instant.</div>'
+      : '<div class="lb-empty">Aucun joueur classé dans cette catégorie pour le moment.</div>';
     return;
   }
-  let html = '<table class="lb-table"><thead><tr>' +
+  let html = '<div class="lb-table-wrap"><table class="lb-table"><thead><tr>' +
     '<th>#</th><th>Pseudo</th><th>Ligue</th><th>FP</th><th>Parties</th>' +
     '</tr></thead><tbody>';
   list.forEach((p,i)=>{
     const t = tierForDivision(p.division);
     const isMe = p.pseudo === currentPseudo;
     const ptsLabel = p.division >= RANKED_MAX_DIVISION ? `${p.points} FP` : `${p.points}/${RANKED_POINTS_PER_LEAGUE}`;
-    html += `<tr class="${isMe?'me':''}">` +
-      `<td class="lb-rank">${i+1}</td>` +
-      `<td>${escapeHtml(p.pseudo)}</td>` +
-      `<td>${t.icon} ${t.name}</td>` +
-      `<td>${ptsLabel}</td>` +
-      `<td>${p.games_played}</td>` +
+    const medal = ['🥇','🥈','🥉'][i] || (i+1);
+    html += `<tr class="${isMe?'me ':''}${i<3?'podium':''}">` +
+      `<td class="lb-rank" data-label="Rang">${medal}</td>` +
+      `<td data-label="Pseudo"><strong>${escapeHtml(p.pseudo)}</strong>${isMe?' · toi':''}</td>` +
+      `<td data-label="Ligue">${t.icon} ${t.name}</td>` +
+      `<td data-label="FP"><strong>${ptsLabel}</strong></td>` +
+      `<td data-label="Parties">${p.games_played}</td>` +
       `</tr>`;
   });
-  html += '</tbody></table>';
+  html += '</tbody></table></div>';
   el.innerHTML = html;
 }
 
@@ -2749,243 +2985,182 @@ document.getElementById('theme-toggle').addEventListener('click', ()=>{
 });
 initTheme();
 
-/* ============ MODE VERSUS 1v1 ============ */
-let versusState = {
-  code: null,
-  role: null,
-  flags: [],
-  selfIndex: 0,
-  selfHp: 1000,
-  oppHp: 1000,
-  oppPseudo: null,
-  pollTimer: null,
-};
-
-function pickVersusFlags(n){
-  const pool = shuffle(allCountryPairs());
-  return pool.slice(0, n).map(c=>c[0]);
-}
-
-function stopVersusPolling(){
-  if(versusState.pollTimer){ clearInterval(versusState.pollTimer); versusState.pollTimer = null; }
-}
-
-function openVersusLobby(){
-  screenHome.classList.add('hidden');
-  screenVersusLobby.classList.remove('hidden');
-  document.getElementById('versus-lobby-msg').classList.add('hidden');
-  document.getElementById('versus-join-code-input').value = '';
-}
-document.getElementById('btn-open-versus').addEventListener('click', openVersusLobby);
-document.getElementById('btn-versus-lobby-back').addEventListener('click', ()=>{
-  screenVersusLobby.classList.add('hidden');
-  screenHome.classList.remove('hidden');
-});
-
-async function createVersusRoom(){
-  const msg = document.getElementById('versus-lobby-msg');
-  msg.classList.add('hidden');
-  const flags = pickVersusFlags(40);
-  try{
-    const res = await fetch('/api/versus/create', {
-      method:'POST', cache:'no-store',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ pseudo: currentPseudo || 'Joueur', flags })
-    });
-    const data = await res.json();
-    if(!res.ok || !data.ok){ showMsgEl('versus-lobby-msg', data.error || 'Erreur lors de la création du salon.'); return; }
-    versusState.code = data.code;
-    versusState.role = 'p1';
-    versusState.flags = flags;
-    versusState.selfIndex = 0;
-    versusState.selfHp = 1000;
-    versusState.oppHp = 1000;
-    versusState.oppPseudo = null;
-    showVersusWaitScreen();
-  }catch(e){
-    showMsgEl('versus-lobby-msg', 'Le mode versus nécessite une connexion au serveur (indisponible en local/hors ligne).');
-  }
-}
-document.getElementById('btn-versus-create').addEventListener('click', createVersusRoom);
-
-function showVersusWaitScreen(){
-  screenVersusLobby.classList.add('hidden');
-  screenVersusWait.classList.remove('hidden');
-  document.getElementById('versus-code-display').textContent = versusState.code;
-  stopVersusPolling();
-  versusState.pollTimer = setInterval(async ()=>{
-    try{
-      const res = await fetch(`/api/versus/state?code=${encodeURIComponent(versusState.code)}&pseudo=${encodeURIComponent(currentPseudo||'Joueur')}`, { cache:'no-store' });
-      const data = await res.json();
-      if(data && data.ok && data.status === 'active'){
-        stopVersusPolling();
-        versusState.oppPseudo = data.opponentPseudo;
-        startVersusBattle();
-      }
-    }catch(e){}
-  }, 1200);
-}
-document.getElementById('btn-versus-wait-back').addEventListener('click', ()=>{
-  stopVersusPolling();
-  screenVersusWait.classList.add('hidden');
-  screenVersusLobby.classList.remove('hidden');
-});
-
-async function joinVersusRoom(){
-  const msg = document.getElementById('versus-lobby-msg');
-  msg.classList.add('hidden');
-  const code = document.getElementById('versus-join-code-input').value.trim().toUpperCase();
-  if(!code){ showMsgEl('versus-lobby-msg', 'Entre un code de salon.'); return; }
-  try{
-    const res = await fetch('/api/versus/join', {
-      method:'POST', cache:'no-store',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ code, pseudo: currentPseudo || 'Joueur' })
-    });
-    const data = await res.json();
-    if(!res.ok || !data.ok){ showMsgEl('versus-lobby-msg', data.error || 'Erreur.'); return; }
-    versusState.code = data.code;
-    versusState.role = data.role;
-    versusState.flags = data.flags;
-    versusState.selfIndex = 0;
-    versusState.selfHp = 1000;
-    versusState.oppHp = 1000;
-    startVersusBattle();
-  }catch(e){
-    showMsgEl('versus-lobby-msg', 'Erreur réseau — le mode versus nécessite une connexion au serveur.');
-  }
-}
-document.getElementById('btn-versus-join').addEventListener('click', joinVersusRoom);
-document.getElementById('versus-join-code-input').addEventListener('keydown', e=>{ if(e.key==='Enter') joinVersusRoom(); });
-
-function updateVersusHpDisplay(){
-  const selfPct = Math.max(0, Math.min(100, versusState.selfHp/10));
-  const oppPct = Math.max(0, Math.min(100, versusState.oppHp/10));
-  document.getElementById('versus-self-hp-fill').style.width = selfPct + '%';
-  document.getElementById('versus-opp-hp-fill').style.width = oppPct + '%';
-  document.getElementById('versus-self-hp-value').textContent = `${versusState.selfHp} / 1000`;
-  document.getElementById('versus-opp-hp-value').textContent = `${versusState.oppHp} / 1000`;
-}
-
-function loadVersusFlag(){
-  const name = versusState.flags[versusState.selfIndex];
-  const visual = document.getElementById('versus-flag-visual');
-  visual.innerHTML = '';
-  const feedback = document.getElementById('versus-feedback');
-  feedback.textContent = '';
-  feedback.className = 'feedback';
-  if(!name){
-    visual.innerHTML = `<div class="flag-fallback">⏳<span>En attente de la fin du match…</span></div>`;
-    document.getElementById('versus-type-input').disabled = true;
-    document.getElementById('versus-btn-validate').disabled = true;
-    return;
-  }
-  const img = document.createElement('img');
-  img.src = FLAG_URL_OF[name] || '';
-  img.alt = 'Drapeau à deviner';
-  img.onerror = function(){ visual.innerHTML = `<div class="flag-fallback">🏳️<span>${name}</span></div>`; };
-  visual.appendChild(img);
-  const input = document.getElementById('versus-type-input');
-  input.value = '';
-  input.disabled = false;
-  document.getElementById('versus-btn-validate').disabled = false;
-  setTimeout(()=>input.focus(), 30);
-}
-
-function startVersusBattle(){
-  screenVersusLobby.classList.add('hidden');
-  screenVersusWait.classList.add('hidden');
-  screenVersusBattle.classList.remove('hidden');
-  document.getElementById('versus-opp-label').textContent = versusState.oppPseudo || 'Adversaire';
-  updateVersusHpDisplay();
-  loadVersusFlag();
-
-  stopVersusPolling();
-  versusState.pollTimer = setInterval(async ()=>{
-    try{
-      const res = await fetch(`/api/versus/state?code=${encodeURIComponent(versusState.code)}&pseudo=${encodeURIComponent(currentPseudo||'Joueur')}`, { cache:'no-store' });
-      const data = await res.json();
-      if(data && data.ok){
-        versusState.oppHp = data.oppHp;
-        if(!versusState.oppPseudo) versusState.oppPseudo = data.opponentPseudo;
-        updateVersusHpDisplay();
-        if(data.status === 'finished'){
-          stopVersusPolling();
-          showVersusResult(data.winner);
-        }
-      }
-    }catch(e){}
-  }, 1200);
-}
-
-async function submitVersusAnswer(){
-  const input = document.getElementById('versus-type-input');
-  const name = versusState.flags[versusState.selfIndex];
-  if(!name || input.disabled) return;
-  const result = isAnswerCorrect(input.value, name);
-  input.disabled = true;
-  document.getElementById('versus-btn-validate').disabled = true;
-  const fb = document.getElementById('versus-feedback');
-  fb.textContent = result.ok ? '✓ Bonne réponse ! (+50 PV, -100 PV adversaire)' : `✗ C'était : ${name} (-25 PV)`;
-  fb.className = 'feedback ' + (result.ok ? 'ok' : 'ko');
-
-  try{
-    const res = await fetch('/api/versus/answer', {
-      method:'POST', cache:'no-store',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ code: versusState.code, pseudo: currentPseudo || 'Joueur', index: versusState.selfIndex, correct: result.ok })
-    });
-    const data = await res.json();
-    if(data && data.ok){
-      versusState.selfHp = data.selfHp;
-      versusState.oppHp = data.oppHp;
-      versusState.selfIndex = data.selfIndex;
-      updateVersusHpDisplay();
-      if(data.status === 'finished'){
-        stopVersusPolling();
-        showVersusResult(data.winner);
-        return;
-      }
-      setTimeout(loadVersusFlag, 600);
-    } else {
-      input.disabled = false;
-      document.getElementById('versus-btn-validate').disabled = false;
+/* ============ MODE VERSUS MULTIJOUEUR ============ */
+const invitedRoom = new URLSearchParams(location.search).get('room')?.trim().toUpperCase().slice(0,10) || '';
+const versus = { code:null, token:null, playerId:null, isHost:false, status:null, players:[], flags:[], question:null, pollTimer:null, generation:0, busy:false };
+const versusScreens = [screenVersusLobby, screenVersusWait, screenVersusBattle, screenVersusResult];
+function versusMessage(id, text){ const el=document.getElementById(id); el.textContent=text; el.classList.toggle('hidden',!text); }
+function setRoomUrl(code){ const url=new URL(location.href); code?url.searchParams.set('room',code):url.searchParams.delete('room'); history.replaceState(null,'',url); }
+function stopVersusPolling(){ versus.generation++; if(versus.pollTimer) clearTimeout(versus.pollTimer); versus.pollTimer=null; }
+function leaveVersus(destination=screenHome){ stopVersusPolling(); versusScreens.forEach(s=>s.classList.add('hidden')); destination.classList.remove('hidden'); setRoomUrl(''); }
+function openVersusLobby(){ stopVersusPolling(); screenHome.classList.add('hidden'); versusScreens.forEach(s=>s.classList.add('hidden')); screenVersusLobby.classList.remove('hidden'); versusMessage('versus-lobby-msg',''); const input=document.getElementById('versus-join-code-input'); input.value=versus.code||invitedRoom; }
+function versusFlags(){
+  const continent = document.getElementById('versus-continent').value;
+  const category = document.getElementById('versus-category').value;
+  const answerMode = document.getElementById('versus-answer-mode').value;
+  const pool = continent === 'Monde entier' ? allCountryPairs() : DATA[continent];
+  const questions = shuffle([...pool]).slice(0,40);
+  return questions.map(([country, image])=>{
+    const answer = category === 'capitals' ? CAPITALS[country] : country;
+    if(answerMode === 'free' && category === 'flags') return [country, image];
+    const question = { answer, image, aliases: category === 'capitals' ? (CAPITAL_ALIASES[answer] || []) : [] };
+    if(category === 'capitals') question.prompt = country;
+    if(answerMode === 'mcq'){
+      const alternatives = pool.filter(([candidate])=>candidate!==country).map(([candidate])=>category === 'capitals' ? CAPITALS[candidate] : candidate);
+      question.choices = shuffle([answer, ...shuffle([...new Set(alternatives.filter(value=>value!==answer))]).slice(0,3)]);
     }
-  }catch(e){
-    input.disabled = false;
-    document.getElementById('versus-btn-validate').disabled = false;
+    return question;
+  });
+}
+async function versusRequest(path, options={}){
+  const headers={...(options.headers||{})}; if(versus.token) headers.Authorization=`Bearer ${versus.token}`;
+  const response=await fetch('/api/versus/'+path,{cache:'no-store',...options,headers});
+  let data={}; try{ data=await response.json(); }catch(e){}
+  if(!response.ok || !data.ok) throw new Error(data.error||'Erreur réseau.'); return data;
+}
+function adoptRoom(data){ versus.code=data.code; versus.token=data.token; versus.playerId=data.playerId; versus.isHost=data.role==='p1'; versus.flags=data.flags||[]; versus.category=data.category||'flags'; versus.continent=data.continent||'Monde entier'; versus.answerMode=data.answerMode||'free'; setRoomUrl(data.code); }
+function renderRoster(target, players=versus.players){
+  const roster = document.getElementById(target);
+  roster.classList.add('versus-roster');
+  const waiting = target === 'versus-wait-roster';
+  const keys = new Set(players.map(player=>String(player.playerId)));
+  for(const card of [...roster.children]){
+    if(!keys.has(card.dataset.playerId)) card.remove();
+  }
+  players.forEach(player=>{
+    const key = String(player.playerId);
+    let card = [...roster.children].find(node=>node.dataset.playerId===key);
+    if(!card){
+      card = document.createElement('div');
+      card.dataset.playerId = key;
+      card.innerHTML = '<div class="versus-player-heading"><span class="versus-avatar"></span><div><strong class="versus-player-name"></strong><span class="versus-player-status"></span></div></div><div class="versus-hp-track" role="progressbar" aria-valuemin="0" aria-valuemax="1000"><div class="versus-hp-fill"></div></div><div class="versus-player-footer"><span class="versus-player-health"></span><span class="versus-player-progress"></span></div>';
+      roster.appendChild(card);
+    }
+    const hp = Math.max(0, Math.min(1000, Number(player.hp) || 0));
+    card.className = `versus-player${player.self?' is-self':''}${hp<=250?' is-low':''}${hp===0?' is-out':''}`;
+    card.querySelector('.versus-avatar').textContent = player.pseudo.slice(0,1).toUpperCase();
+    card.querySelector('.versus-player-name').textContent = player.pseudo;
+    card.querySelector('.versus-player-status').textContent = `${player.self?'Toi · ':''}${waiting?'Prêt à jouer':hp===0?'Éliminé':hp<=250?'Vie faible':'En jeu'}`;
+    const track = card.querySelector('.versus-hp-track');
+    track.setAttribute('aria-label', `Vie de ${player.pseudo}`);
+    track.setAttribute('aria-valuenow', String(hp));
+    card.querySelector('.versus-hp-fill').style.width = `${hp/10}%`;
+    card.querySelector('.versus-player-health').textContent = `${hp} / 1000 PV`;
+    card.querySelector('.versus-player-progress').textContent = waiting?'':`${player.index || 0} réponses`;
+  });
+}
+function showWait(){ versusScreens.forEach(s=>s.classList.add('hidden')); screenVersusWait.classList.remove('hidden'); document.getElementById('versus-code-display').textContent=versus.code; pollVersus(); }
+function scheduleVersusPoll(generation, delay){ if(generation!==versus.generation)return; versus.pollTimer=setTimeout(()=>pollVersus(generation),delay); }
+async function pollVersus(generation){
+  if(generation===undefined){ stopVersusPolling(); generation=versus.generation; }
+  if(!versus.code||!versus.token||generation!==versus.generation)return;
+  try{ const data=await versusRequest(`state?code=${encodeURIComponent(versus.code)}&token=${encodeURIComponent(versus.token)}`); if(generation!==versus.generation)return; if(!versus.busy) applyVersusState(data); scheduleVersusPoll(generation,800); }
+  catch(e){ if(generation!==versus.generation)return; versusMessage(screenVersusWait.classList.contains('hidden')?'versus-feedback':'versus-wait-msg',`${e.message} Nouvelle tentative…`); scheduleVersusPoll(generation,2500); }
+}
+function applyVersusState(data){
+  if(data.category) versus.category=data.category;
+  if(data.continent) versus.continent=data.continent;
+  if(data.answerMode) versus.answerMode=data.answerMode;
+  document.getElementById('versus-room-settings').textContent=`${versus.category==='capitals'?'🏛️ Capitales':'🏳️ Drapeaux'} · ${versus.answerMode==='mcq'?'☑️ QCM':'⌨️ Saisie libre'} · ${versus.continent || 'Monde entier'}`;
+  versus.status=data.status; versus.players=(data.players||[]).map(p=>({...p,self:p.self===true||p.playerId===versus.playerId})); versus.flags=data.flags||versus.flags; const self=versus.players.find(p=>p.self); versus.question=data.question !== undefined ? data.question : (self ? versus.flags[self.index] || null : null); if(Object.prototype.hasOwnProperty.call(data,'isHost')) versus.isHost=!!data.isHost;
+  if(data.status==='waiting'){
+    if(screenVersusWait.classList.contains('hidden')) showWait(); renderRoster('versus-wait-roster');
+    const start=document.getElementById('btn-versus-start'); start.classList.toggle('hidden',!versus.isHost); start.disabled=data.playerCount<2; start.textContent=`Démarrer (${data.playerCount}/${data.maxPlayers})`;
+  } else if(data.status==='active'){ showBattle(); } else if(data.status==='finished'){ showVersusResult(data.winner); }
+}
+async function createVersusRoom(){
+  if(versus.busy)return; const generation=versus.generation; versus.busy=true; const btn=document.getElementById('btn-versus-create'); btn.disabled=true; versusMessage('versus-lobby-msg','');
+  try{ const data=await versusRequest('create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pseudo:currentPseudo||'Joueur',maxPlayers:Number(document.getElementById('versus-capacity').value),category:document.getElementById('versus-category').value,answerMode:document.getElementById('versus-answer-mode').value,continent:document.getElementById('versus-continent').value,flags:versusFlags()})}); if(generation!==versus.generation)return; adoptRoom(data); showWait(); }
+  catch(e){ versusMessage('versus-lobby-msg',e.message); } finally{versus.busy=false;btn.disabled=false;}
+}
+async function joinVersusRoom(){
+  if(versus.busy)return; const code=document.getElementById('versus-join-code-input').value.trim().toUpperCase(); if(!code)return versusMessage('versus-lobby-msg','Entre un code de salon.');
+  const generation=versus.generation; versus.busy=true; const btn=document.getElementById('btn-versus-join');btn.disabled=true;
+  try{ const data=await versusRequest('join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,pseudo:currentPseudo||'Joueur'})}); if(generation!==versus.generation)return; adoptRoom(data); showWait(); }
+  catch(e){versusMessage('versus-lobby-msg',e.message);} finally{versus.busy=false;btn.disabled=false;}
+}
+async function startVersus(){ if(versus.busy)return; versus.busy=true; const btn=document.getElementById('btn-versus-start');btn.disabled=true; try{ await versusRequest('start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:versus.code,token:versus.token})}); }catch(e){versusMessage('versus-wait-msg',e.message);}finally{versus.busy=false;} }
+function showBattle(){
+  const entering = screenVersusBattle.classList.contains('hidden');
+  screenVersusWait.classList.add('hidden');
+  screenVersusLobby.classList.add('hidden');
+  screenVersusBattle.classList.remove('hidden');
+  renderRoster('versus-hp-roster');
+  document.getElementById('versus-alive-count').textContent = `${versus.players.filter(p=>p.hp>0).length} / ${versus.players.length} en jeu`;
+  const self = versus.players.find(player=>player.self);
+  const eliminated = self && self.hp<=0;
+  document.getElementById('versus-spectating').classList.toggle('hidden', !eliminated);
+  const input = document.getElementById('versus-type-input');
+  const button = document.getElementById('versus-btn-validate');
+  const typeRow = document.getElementById('versus-type-row');
+  const mcqArea = document.getElementById('versus-mcq-area');
+  const isMcq = versus.answerMode === 'mcq';
+  typeRow.classList.toggle('hidden', isMcq);
+  mcqArea.classList.toggle('hidden', !isMcq);
+  const wasUnavailable = input.disabled || input.readOnly;
+  input.disabled = !!eliminated || !versus.question;
+  // Keep keyboard focus while a submission is in flight, but prevent editing.
+  input.readOnly = versus.busy;
+  button.disabled = input.disabled || input.readOnly;
+  input.placeholder = versus.category==='capitals' ? 'Nom de la capitale…' : 'Nom du pays…';
+  const visual = document.getElementById('versus-flag-visual');
+  const questionKey = JSON.stringify([versus.code, self?.index, versus.question]);
+  const changed = visual.dataset.question !== questionKey;
+  if(changed || eliminated){
+    visual.dataset.question = questionKey;
+    visual.innerHTML = '';
+    if(!versus.question || eliminated){
+      visual.textContent = eliminated ? 'Éliminé — tu peux suivre la fin du match.' : 'Toutes les réponses envoyées — en attente des autres joueurs…';
+    } else if(versus.question.prompt){
+      renderCapitalQuestion(visual, versus.question.prompt, versus.question.image);
+    } else if(versus.question.image){
+      const image = document.createElement('img');
+      image.src = versus.question.image;
+      image.alt = 'Drapeau à deviner';
+      visual.appendChild(image);
+    }
+    if(changed){
+      input.value = '';
+      mcqArea.innerHTML = '';
+      if(isMcq && !eliminated && versus.question?.choices){
+        versus.question.choices.forEach(choice=>{
+          const option = document.createElement('button');
+          option.type = 'button';
+          option.className = 'choice-btn';
+          option.textContent = choice;
+          option.addEventListener('click', ()=>submitVersusAnswer(choice));
+          mcqArea.appendChild(option);
+        });
+      }
+    }
+  }
+  mcqArea.querySelectorAll('button').forEach(option=>option.disabled=versus.busy || !!eliminated || !versus.question);
+  if(!isMcq && !input.disabled && !input.readOnly && (entering || changed || wasUnavailable)){
+    input.focus({ preventScroll: true });
   }
 }
-document.getElementById('versus-btn-validate').addEventListener('click', submitVersusAnswer);
-document.getElementById('versus-type-input').addEventListener('keydown', e=>{ if(e.key==='Enter') submitVersusAnswer(); });
-
-function showVersusResult(winner){
-  stopVersusPolling();
-  screenVersusBattle.classList.add('hidden');
-  screenVersusResult.classList.remove('hidden');
-  const badge = document.getElementById('versus-result-badge');
-  const msg = document.getElementById('versus-result-msg');
-  if(winner === 'draw'){
-    badge.textContent = '🤝';
-    msg.textContent = 'Match nul !';
-  } else if(winner === (currentPseudo || 'Joueur')){
-    badge.textContent = '🏆';
-    msg.textContent = `Victoire ! Tu as battu ${versusState.oppPseudo || 'ton adversaire'}.`;
-  } else {
-    badge.textContent = '💀';
-    msg.textContent = `Défaite face à ${winner || versusState.oppPseudo || 'ton adversaire'}.`;
-  }
+async function submitVersusAnswer(selectedAnswer){
+  if(versus.busy)return; const self=versus.players.find(p=>p.self), answer=typeof selectedAnswer==='string' ? selectedAnswer : document.getElementById('versus-type-input').value.trim(); if(!answer||!self||self.hp<=0)return;
+  versus.busy=true; const generation=versus.generation; showBattle(); const fb=document.getElementById('versus-feedback');
+  try{ const data=await versusRequest('answer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:versus.code,token:versus.token,index:self.index,answer})}); if(generation!==versus.generation)return; if(data.applied){ fb.textContent=data.correct?'✓ Bonne réponse ! Dégâts infligés.':`✗ Mauvaise réponse — réponse : ${data.correctAnswer || 'inconnue'} (-25 PV).`;fb.className='feedback '+(data.correct?'ok':'ko'); versus.question=null; } else fb.textContent='Réponse déjà prise en compte.'; applyVersusState(data); }
+  catch(e){fb.textContent=e.message+' Réessaie.';fb.className='feedback ko';}finally{versus.busy=false;if(generation===versus.generation && versus.status==='active')showBattle();}
 }
-document.getElementById('btn-versus-replay').addEventListener('click', ()=>{
-  screenVersusResult.classList.add('hidden');
-  openVersusLobby();
-});
-document.getElementById('btn-versus-home').addEventListener('click', ()=>{
-  screenVersusResult.classList.add('hidden');
-  screenHome.classList.remove('hidden');
-});
+function showVersusResult(winner){ stopVersusPolling(); versusScreens.forEach(s=>s.classList.add('hidden')); screenVersusResult.classList.remove('hidden'); const mine=winner===(currentPseudo||'Joueur'); document.getElementById('versus-result-badge').textContent=winner==='draw'?'🤝':mine?'🏆':'💀'; document.getElementById('versus-result-msg').textContent=winner==='draw'?'Match nul !':mine?'Victoire !':`Victoire de ${winner||'un adversaire'}.`; renderRoster('versus-result-roster'); }
+document.getElementById('btn-open-versus').addEventListener('click',openVersusLobby);
+document.getElementById('btn-versus-lobby-back').addEventListener('click',()=>leaveVersus());
+document.getElementById('btn-versus-wait-back').addEventListener('click',()=>leaveVersus(screenVersusLobby));
+document.getElementById('btn-versus-battle-back').addEventListener('click',()=>leaveVersus());
+document.getElementById('btn-versus-create').addEventListener('click',createVersusRoom);
+document.getElementById('btn-versus-join').addEventListener('click',joinVersusRoom);
+document.getElementById('versus-join-code-input').addEventListener('keydown',e=>{if(e.key==='Enter')joinVersusRoom();});
+document.getElementById('btn-versus-start').addEventListener('click',startVersus);
+document.getElementById('btn-versus-copy').addEventListener('click',async()=>{ const link=new URL(location.href);link.searchParams.set('room',versus.code);try{await navigator.clipboard.writeText(link.href);versusMessage('versus-wait-msg','Lien copié !');}catch(e){versusMessage('versus-wait-msg',link.href);} });
+document.getElementById('versus-btn-validate').addEventListener('click',submitVersusAnswer);
+document.getElementById('versus-type-input').addEventListener('keydown',e=>{if(e.key==='Enter')submitVersusAnswer();});
+document.getElementById('btn-versus-replay').addEventListener('click',openVersusLobby);
+document.getElementById('btn-versus-home').addEventListener('click',()=>leaveVersus());
 
-initPlayer();
+initPlayer().then(()=>{ if(invitedRoom && currentPseudo) openVersusLobby(); });
 
 </script>
 </body>

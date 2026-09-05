@@ -16,6 +16,8 @@ export async function onRequestPost({ request, env }) {
   try {
     const body = await request.json();
     const pseudo = String(body.pseudo ?? "Joueur").trim().slice(0, 20) || "Joueur";
+    const category = body.category === "capitals" ? "capitals" : "flags";
+    const playerTable = category === "capitals" ? "ranked_players" : "players";
     const score = clampInt(body.score, 0, 20);
     const total = clampInt(body.total, 1, 20);
     const today = todayKey();
@@ -27,8 +29,8 @@ export async function onRequestPost({ request, env }) {
     }
 
     let row = await env.DB.prepare(
-      "SELECT division, points, streak, games_played, games_today, games_today_date FROM players WHERE pseudo = ?"
-    ).bind(pseudo).first();
+      `SELECT division, points, streak, games_played, games_today, games_today_date FROM ${playerTable} WHERE pseudo = ?${category === "capitals" ? " AND category = ?" : ""}`
+    ).bind(...(category === "capitals" ? [pseudo, category] : [pseudo])).first();
 
     if (!row) {
       row = { division: 0, points: 0, streak: 0, games_played: 0, games_today: 0, games_today_date: today };
@@ -41,19 +43,19 @@ export async function onRequestPost({ request, env }) {
     if (gamesToday >= dailyLimit) {
       // Limite quotidienne atteinte : partie jouable mais aucun FP, aucun changement d'etat.
       await env.DB.prepare(
-        `INSERT INTO players (pseudo, division, points, streak, games_played, games_today, games_today_date, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+        `INSERT INTO ${playerTable} (pseudo, ${category === "capitals" ? "category, " : ""}division, points, streak, games_played, games_today, games_today_date, updated_at)
+         VALUES (?, ${category === "capitals" ? "?, " : ""}?, ?, ?, ?, ?, ?, datetime('now'))
          ON CONFLICT(pseudo) DO UPDATE SET
            streak = excluded.streak,
            games_today = excluded.games_today,
            games_today_date = excluded.games_today_date,
            updated_at = datetime('now')`
-      ).bind(pseudo, row.division, row.points, effectiveStreak, row.games_played, gamesToday, today).run();
+      ).bind(...(category === "capitals" ? [pseudo, category, row.division, row.points, effectiveStreak, row.games_played, gamesToday, today] : [pseudo, row.division, row.points, effectiveStreak, row.games_played, gamesToday, today])).run();
 
       await env.DB.prepare(
-        `INSERT INTO ranked_history (pseudo, score, total, gained, division_after, points_after, daily_limit_reached, details)
-         VALUES (?, ?, ?, 0, ?, ?, 1, ?)`
-      ).bind(pseudo, score, total, row.division, row.points, details).run();
+        `INSERT INTO ranked_history (pseudo, category, score, total, gained, division_after, points_after, daily_limit_reached, details)
+         VALUES (?, ?, ?, ?, 0, ?, ?, 1, ?)`
+      ).bind(pseudo, category, score, total, row.division, row.points, details).run();
 
       return jsonResponse({
         ok: true, base: 0, bonus: 0, gained: 0,
@@ -68,8 +70,8 @@ export async function onRequestPost({ request, env }) {
     const gamesPlayed = row.games_played + 1;
 
     await env.DB.prepare(
-      `INSERT INTO players (pseudo, division, points, streak, games_played, games_today, games_today_date, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      `INSERT INTO ${playerTable} (pseudo, ${category === "capitals" ? "category, " : ""}division, points, streak, games_played, games_today, games_today_date, updated_at)
+       VALUES (?, ${category === "capitals" ? "?, " : ""}?, ?, ?, ?, ?, ?, datetime('now'))
        ON CONFLICT(pseudo) DO UPDATE SET
          division = excluded.division,
          points = excluded.points,
@@ -78,12 +80,12 @@ export async function onRequestPost({ request, env }) {
          games_today = excluded.games_today,
          games_today_date = excluded.games_today_date,
          updated_at = datetime('now')`
-    ).bind(pseudo, applied.division, applied.points, fp.newStreak, gamesPlayed, gamesToday, today).run();
+    ).bind(...(category === "capitals" ? [pseudo, category, applied.division, applied.points, fp.newStreak, gamesPlayed, gamesToday, today] : [pseudo, applied.division, applied.points, fp.newStreak, gamesPlayed, gamesToday, today])).run();
 
     await env.DB.prepare(
-      `INSERT INTO ranked_history (pseudo, score, total, gained, division_after, points_after, daily_limit_reached, details)
-       VALUES (?, ?, ?, ?, ?, ?, 0, ?)`
-    ).bind(pseudo, score, total, fp.gained, applied.division, applied.points, details).run();
+      `INSERT INTO ranked_history (pseudo, category, score, total, gained, division_after, points_after, daily_limit_reached, details)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)`
+    ).bind(pseudo, category, score, total, fp.gained, applied.division, applied.points, details).run();
 
     return jsonResponse({
       ok: true, base: fp.base, bonus: fp.bonus, gained: fp.gained,
