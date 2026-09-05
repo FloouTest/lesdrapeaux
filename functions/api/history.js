@@ -20,22 +20,34 @@ export async function onRequestGet({ request, env }) {
   try {
     const url = new URL(request.url);
     const pseudo = (url.searchParams.get("pseudo") || "").trim().slice(0, 20);
-    if (!pseudo) return jsonResponse({ ok: false, error: "Pseudo manquant." }, 400);
+    if (!pseudo)
+      return jsonResponse({ ok: false, error: "Pseudo manquant." }, 400);
 
     const { results } = await env.DB.prepare(
       `SELECT created_at, 'casual' AS type, category, continent AS label, mode, score, total, points,
-              NULL AS division, 0 AS daily_limit_reached, details
+              NULL AS division, 0 AS daily_limit_reached, details, seconds, NULL AS attempts
        FROM leaderboard WHERE pseudo = ?
        UNION ALL
        SELECT created_at, 'ranked' AS type, category, 'Classé' AS label, 'saisie' AS mode, score, total,
-              gained AS points, division_after AS division, daily_limit_reached, details
+              gained AS points, division_after AS division, daily_limit_reached, details, NULL AS seconds,
+              NULL AS attempts
        FROM ranked_history WHERE pseudo = ?
+       UNION ALL
+       SELECT created_at, 'map' AS type, 'map' AS category, 'Trouve sur la carte' AS label,
+              prompt_mode AS mode, score, total, 0 AS points, NULL AS division,
+              0 AS daily_limit_reached, details, seconds, attempts
+       FROM map_history WHERE pseudo = ?
        ORDER BY created_at DESC
-       LIMIT 10`
-    ).bind(pseudo, pseudo).all();
+       LIMIT 10`,
+    )
+      .bind(pseudo, pseudo, pseudo)
+      .all();
 
     return jsonResponse({ ok: true, history: results });
   } catch (err) {
-    return jsonResponse({ ok: false, error: "Erreur lors de la lecture de l'historique." }, 500);
+    return jsonResponse(
+      { ok: false, error: "Erreur lors de la lecture de l'historique." },
+      500,
+    );
   }
 }

@@ -97,6 +97,22 @@ export default function Home({ pseudo, go, startRanked, start }) {
           </div>
         </div>
       </section>
+      <section className="map-banner">
+        <div className="map-banner-left">
+          <span className="map-banner-icon" aria-hidden="true">
+            🗺️
+          </span>
+          <div>
+            <strong className="map-banner-title">Trouve sur la carte</strong>
+            <div className="map-banner-sub">
+              Repère un pays à partir de son nom ou de sa capitale
+            </div>
+          </div>
+        </div>
+        <Button className="map-banner-play" onClick={() => go("map")}>
+          Explorer le monde
+        </Button>
+      </section>
       <section className="versus-banner">
         <div className="versus-banner-left">
           <span className="versus-icon">⚔️</span>

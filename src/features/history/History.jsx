@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api } from "../../game";
+import { api, formatTime } from "../../game";
 import { Back } from "../../components/Layout";
 
 const DATE_FORMAT = new Intl.DateTimeFormat("fr-FR", {
@@ -24,8 +24,13 @@ export function historyAccuracy(row) {
 
 function HistoryEntry({ row }) {
   const ranked = row.type === "ranked";
+  const mapGame = row.type === "map";
   const accuracy = historyAccuracy(row);
-  const label = ranked ? "Classé" : row.label || "Partie classique";
+  const label = ranked
+    ? "Classé"
+    : mapGame
+      ? "Trouve sur la carte"
+      : row.label || "Partie classique";
 
   return (
     <li className="history-entry">
@@ -33,13 +38,19 @@ function HistoryEntry({ row }) {
         className={`history-mode-icon ${ranked ? "is-ranked" : ""}`}
         aria-hidden="true"
       >
-        {ranked ? "🏆" : row.category === "capitals" ? "🏛️" : "🌍"}
+        {ranked
+          ? "🏆"
+          : mapGame
+            ? "🗺️"
+            : row.category === "capitals"
+              ? "🏛️"
+              : "🌍"}
       </div>
       <div className="history-entry-main">
         <div className="history-entry-heading">
           <div>
             <span className={`history-type ${ranked ? "is-ranked" : ""}`}>
-              {ranked ? "Classé" : "Classique"}
+              {ranked ? "Classé" : mapGame ? "Carte" : "Classique"}
             </span>
             <h2>{label}</h2>
           </div>
@@ -50,10 +61,20 @@ function HistoryEntry({ row }) {
         </div>
         <div className="history-meta">
           <time>{formatHistoryDate(row.created_at)}</time>
-          <span>{row.category === "capitals" ? "Capitales" : "Drapeaux"}</span>
-          {!ranked && row.mode && (
+          <span>
+            {mapGame
+              ? row.mode === "capital"
+                ? "Indice : capitale"
+                : "Indice : pays"
+              : row.category === "capitals"
+                ? "Capitales"
+                : "Drapeaux"}
+          </span>
+          {!ranked && !mapGame && row.mode && (
             <span>{row.mode === "qcm" ? "QCM" : "Saisie libre"}</span>
           )}
+          {mapGame && <span>{row.attempts} essais</span>}
+          {mapGame && <span>{formatTime(row.seconds || 0)}</span>}
         </div>
         <div className="history-result-row">
           <div
@@ -66,8 +87,9 @@ function HistoryEntry({ row }) {
           <span
             className={`history-points ${Number(row.points) > 0 ? "is-positive" : ""}`}
           >
-            {Number(row.points) > 0 ? "+" : ""}
-            {row.points || 0} pts
+            {mapGame
+              ? `${row.attempts} clics`
+              : `${Number(row.points) > 0 ? "+" : ""}${row.points || 0} pts`}
           </span>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { ALL_COUNTRIES } from "./data/countries";
 import { api } from "./game";
 import { Header } from "./components/Layout";
@@ -10,6 +10,8 @@ import Results from "./features/quiz/Results";
 import Leaderboard from "./features/leaderboard/Leaderboard";
 import History from "./features/history/History";
 import Versus from "./features/versus/Versus";
+
+const MapGame = lazy(() => import("./features/map/MapGame"));
 import { markTodayPlayed } from "./features/home/ranked";
 
 export default function App() {
@@ -25,6 +27,7 @@ export default function App() {
   );
   const [config, setConfig] = useState();
   const [result, setResult] = useState();
+  const [quizQuitRequest, setQuizQuitRequest] = useState(0);
 
   useEffect(() => {
     if (
@@ -129,13 +132,17 @@ export default function App() {
     setScreen("results");
   }
 
+  function goHome() {
+    if (screen === "quiz") {
+      setQuizQuitRequest((request) => request + 1);
+      return;
+    }
+    setScreen("home");
+  }
+
   return (
     <>
-      <Header
-        pseudo={pseudo}
-        onHome={() => setScreen("home")}
-        onTheme={toggleTheme}
-      />
+      <Header pseudo={pseudo} onHome={goHome} onTheme={toggleTheme} />
       {screen === "account" && <Account done={login} />}
       {screen === "home" && (
         <Home
@@ -146,7 +153,13 @@ export default function App() {
         />
       )}
       {screen === "quiz" && (
-        <Quiz config={config} finish={finish} quit={() => setScreen("home")} />
+        <Quiz
+          config={config}
+          finish={finish}
+          quit={() => setScreen("home")}
+          pseudo={pseudo}
+          quitRequest={quizQuitRequest}
+        />
       )}
       {screen === "results" && (
         <Results result={result} go={setScreen} replay={() => start(config)} />
@@ -158,6 +171,13 @@ export default function App() {
         <History pseudo={pseudo} back={() => setScreen("home")} />
       )}
       {screen === "versus" && <Versus pseudo={pseudo} go={setScreen} />}
+      {screen === "map" && (
+        <Suspense
+          fallback={<main className="card">Chargement de la carte…</main>}
+        >
+          <MapGame pseudo={pseudo} back={() => setScreen("home")} />
+        </Suspense>
+      )}
     </>
   );
 }

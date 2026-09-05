@@ -75,3 +75,18 @@ CREATE TABLE IF NOT EXISTS ranked_history (
 );
 
 CREATE INDEX IF NOT EXISTS idx_ranked_history_pseudo ON ranked_history(pseudo, created_at);
+
+-- Historique du mode « Trouve sur la carte ».
+CREATE TABLE IF NOT EXISTS map_history (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  pseudo TEXT NOT NULL,
+  prompt_mode TEXT NOT NULL CHECK(prompt_mode IN ('country', 'capital')),
+  score INTEGER NOT NULL,
+  total INTEGER NOT NULL,
+  attempts INTEGER NOT NULL,
+  seconds INTEGER NOT NULL,
+  details TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_map_history_pseudo ON map_history(pseudo, created_at);

@@ -18,7 +18,12 @@ export default function Results({ result, go, replay }) {
   const ratio = result.score / result.total;
   return (
     <>
-      <main className="card result">
+      <main
+        className={`card result${result.ranked ? " ranked-result-screen" : ""}`}
+      >
+        {result.ranked && (
+          <p className="result-kicker">Partie classée terminée</p>
+        )}
         <div className="result-badge">
           {result.score}/{result.total}
         </div>
@@ -30,34 +35,77 @@ export default function Results({ result, go, replay }) {
           faute{result.total - result.score !== 1 ? "s" : ""}
         </p>
         {result.ranked && (
-          <div className="ranked-result">
-            <div className="ranked-result-badge">
-              {tier.icon} {tier.name}
+          <section className="ranked-result" aria-label="Progression classée">
+            <div className="ranked-result-heading">
+              <span className="ranked-result-icon" aria-hidden="true">
+                {tier.icon}
+              </span>
+              <div>
+                <small>Ligue actuelle</small>
+                <strong>{tier.name}</strong>
+              </div>
             </div>
             {result.dailyLimitReached ? (
-              <div className="ranked-result-total">
-                🚫 Tu as déjà joué tes {result.dailyLimit} parties classées du
-                jour — cette partie n'a rapporté aucun FP. Reviens demain !
+              <div className="ranked-result-limit">
+                <span aria-hidden="true">⏳</span>
+                <div>
+                  <strong>Limite quotidienne atteinte</strong>
+                  <p>
+                    Cette partie est enregistrée, mais ne rapporte aucun FP.
+                    Reviens demain !
+                  </p>
+                </div>
               </div>
             ) : (
               <>
-                <div className="ranked-result-delta up">
-                  +{result.gained} FP
-                  {result.bonus > 0 ? ` (dont +${result.bonus} série 🔥)` : ""}
+                <div className="ranked-result-reward">
+                  <small>Progression gagnée</small>
+                  <strong>+{result.gained} FP</strong>
+                  {result.bonus > 0 && (
+                    <span>🔥 Bonus de série : +{result.bonus} FP</span>
+                  )}
                 </div>
-                <div className="ranked-result-total">
-                  {result.points}/100 FP dans cette ligue ·{" "}
-                  {Math.max(0, result.dailyLimit - result.gamesToday)}/
-                  {result.dailyLimit} parties classées restantes aujourd'hui
+                <div className="ranked-result-progress-copy">
+                  <span>Progression dans la ligue</span>
+                  <strong>{result.points}/100 FP</strong>
+                </div>
+                <div
+                  className="ranked-result-progress"
+                  role="progressbar"
+                  aria-label="Progression dans la ligue"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow={Math.min(100, result.points)}
+                >
+                  <span style={{ width: `${Math.min(100, result.points)}%` }} />
+                </div>
+                <div className="ranked-result-stats">
+                  <span>
+                    <strong>{Math.round(ratio * 100)}%</strong>
+                    de réussite
+                  </span>
+                  <span>
+                    <strong>{formatTime(result.seconds)}</strong>
+                    temps total
+                  </span>
+                  <span>
+                    <strong>
+                      {Math.max(0, result.dailyLimit - result.gamesToday)}/
+                      {result.dailyLimit}
+                    </strong>
+                    parties restantes
+                  </span>
                 </div>
               </>
             )}
-          </div>
+          </section>
         )}
         <div className="result-actions">
-          <Button onClick={replay}>Rejouer ce continent</Button>
+          <Button onClick={replay}>
+            {result.ranked ? "Rejouer en classé" : "Rejouer ce continent"}
+          </Button>
           <Button className="btn-ghost" onClick={() => go("home")}>
-            Changer de continent
+            {result.ranked ? "Retour à l’accueil" : "Changer de continent"}
           </Button>
           <Button className="btn-ghost" onClick={() => go("leaderboard")}>
             🏆 Voir le classement

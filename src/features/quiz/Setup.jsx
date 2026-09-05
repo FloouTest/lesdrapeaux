@@ -9,7 +9,14 @@ const ICONS = {
   Europe: "🏰",
   Océanie: "🏝️",
 };
-function Picker({ selected, setSelected, done, back }) {
+export function CountryPicker({
+  selected,
+  setSelected,
+  done,
+  back,
+  countries = ALL_COUNTRIES,
+  minimum = 1,
+}) {
   const toggle = (name) =>
     setSelected(
       selected.includes(name)
@@ -19,57 +26,62 @@ function Picker({ selected, setSelected, done, back }) {
   return (
     <section className="picker-screen" aria-labelledby="picker-title">
       <Back go={back} />
-      <h2 id="picker-title">Choisis tes drapeaux</h2>
+      <h2 id="picker-title">Choisis tes pays</h2>
       <p>
-        Clique sur les drapeaux à inclure dans ton quiz. Sélectionne-en au moins
-        un pour continuer.
+        Clique sur les pays à inclure. Sélectionne-en au moins {minimum} pour
+        continuer.
       </p>
       <div className="picker-toolbar">
         <Button
           className="btn-ghost"
           onClick={() =>
             setSelected(
-              selected.length === ALL_COUNTRIES.length
+              selected.length === countries.length
                 ? []
-                : ALL_COUNTRIES.map((x) => x.name),
+                : countries.map((country) => country.name),
             )
           }
         >
           Tout sélectionner
         </Button>
         <b>
-          {selected.length} drapeau{selected.length !== 1 ? "x" : ""}{" "}
-          sélectionné{selected.length !== 1 ? "s" : ""}
+          {selected.length} pays sélectionné{selected.length !== 1 ? "s" : ""}
         </b>
       </div>
       <div className="picker-groups">
-        {Object.entries(COUNTRIES).map(([group, countries]) => (
-          <section className="picker-group" key={group}>
-            <h3>
-              {ICONS[group]} {group}
-            </h3>
-            <div className="picker-grid">
-              {countries.map((c) => (
-                <button
-                  type="button"
-                  className={`flag-card ${selected.includes(c.name) ? "selected" : ""}`}
-                  aria-pressed={selected.includes(c.name)}
-                  onClick={() => toggle(c.name)}
-                  key={c.name}
-                >
-                  <img src={c.flag} alt="" />
-                  <span>{c.name}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-        ))}
+        {Object.entries(COUNTRIES).map(([group, groupCountries]) => {
+          const availableCountries = groupCountries.filter((country) =>
+            countries.some((available) => available.name === country.name),
+          );
+          if (!availableCountries.length) return null;
+          return (
+            <section className="picker-group" key={group}>
+              <h3>
+                {ICONS[group]} {group}
+              </h3>
+              <div className="picker-grid">
+                {availableCountries.map((c) => (
+                  <button
+                    type="button"
+                    className={`flag-card ${selected.includes(c.name) ? "selected" : ""}`}
+                    aria-pressed={selected.includes(c.name)}
+                    onClick={() => toggle(c.name)}
+                    key={c.name}
+                  >
+                    <img src={c.flag} alt="" />
+                    <span>{c.name}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          );
+        })}
       </div>
       <div className="picker-bottom">
         <Button className="btn-ghost" onClick={back}>
           Annuler
         </Button>
-        <Button disabled={!selected.length} onClick={done}>
+        <Button disabled={selected.length < minimum} onClick={done}>
           Valider ma sélection
         </Button>
       </div>
@@ -92,7 +104,7 @@ export default function Setup({
     [picker, setPicker] = useState(false);
   if (picker)
     return (
-      <Picker
+      <CountryPicker
         selected={custom}
         setSelected={setCustom}
         done={() => {

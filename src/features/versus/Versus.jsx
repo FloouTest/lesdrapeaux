@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { CAPITALS, CAPITAL_ALIASES } from "../../../capitals.js";
 import { ALL_COUNTRIES, COUNTRIES } from "../../data/countries";
 import { api, shuffle } from "../../game";
 import { Back, Button } from "../../components/Layout";
 
+const VersusMap = lazy(() => import("../map/VersusMap"));
 const automaticJoins = new Map();
 
 function joinFromInvitation(code, pseudo) {
@@ -32,6 +33,17 @@ export function buildQuestions(settings) {
   return shuffle(pool)
     .slice(0, 40)
     .map((country) => {
+      if (settings.category === "map") {
+        return {
+          answer: country.code.toUpperCase(),
+          countryName: country.name,
+          image: country.flag,
+          prompt:
+            settings.mapPromptMode === "capital"
+              ? CAPITALS[country.name]
+              : country.name,
+        };
+      }
       const answer =
         settings.category === "capitals"
           ? CAPITALS[country.name]
@@ -60,6 +72,8 @@ export function buildQuestions(settings) {
 }
 
 function roomSummary(settings) {
+  if (settings.category === "map")
+    return `🗺️ Carte · ${settings.mapPromptMode === "capital" ? "Indice capitale" : "Indice pays"}${settings.firstToFind ? " · Premier à trouver" : ""}`;
   const category =
     settings.category === "capitals" ? "🏛️ Capitales" : "🏳️ Drapeaux";
   const mode = settings.answerMode === "mcq" ? "☑️ QCM" : "⌨️ Saisie libre";
@@ -138,6 +152,8 @@ export default function Versus({ pseudo, go }) {
     answerMode: "free",
     continent: "Monde entier",
     maxPlayers: 5,
+    mapPromptMode: "country",
+    firstToFind: false,
   });
   const [answer, setAnswer] = useState("");
   const [message, setMessage] = useState("");
@@ -245,6 +261,8 @@ export default function Versus({ pseudo, go }) {
           category: data.category || current.category,
           answerMode: data.answerMode || current.answerMode,
           continent: data.continent || current.continent,
+          mapPromptMode: data.mapPromptMode || current.mapPromptMode,
+          firstToFind: data.firstToFind ?? current.firstToFind,
         }));
         if (data.status === "active") setScreen("battle");
         if (data.status === "finished") setScreen("result");
@@ -271,10 +289,7 @@ export default function Versus({ pseudo, go }) {
     requestAnimationFrame(() => input.current?.focus());
   }, [questionKey]);
 
-  useEffect(
-    () => () => clearTimeout(incorrectFeedbackTimer.current),
-    [],
-  );
+  useEffect(() => () => clearTimeout(incorrectFeedbackTimer.current), []);
   async function submit(value = answer) {
     if (submitting.current || !value) return;
     submitting.current = true;
@@ -303,6 +318,29 @@ export default function Versus({ pseudo, go }) {
       setMessage(cause.message);
       submitting.current = false;
     }
+  }
+  async function submitMapGuess(coordinate, clickedCode) {
+    const data = await post("answer", {
+      code,
+      token,
+      index: players.find((player) => player.self)?.index,
+      answer: clickedCode || "",
+      longitude: coordinate[0],
+      latitude: coordinate[1],
+    });
+    if (data.players) {
+      setPlayers(
+        data.players.map((player) => ({
+          ...player,
+          self: player.playerId === players.find((item) => item.self)?.playerId,
+        })),
+      );
+    }
+    if (data.status === "finished") {
+      setWinner(data.winner || null);
+      setScreen("result");
+    }
+    return data;
   }
   async function quit() {
     try {
@@ -341,19 +379,37 @@ export default function Versus({ pseudo, go }) {
                 >
                   <option value="flags">🏳️ Drapeaux</option>
                   <option value="capitals">🏛️ Capitales</option>
+                  <option value="map">🗺️ Trouve sur la carte</option>
                 </select>
               </label>
               <label>
-                <span>Réponses</span>
-                <select
-                  value={settings.answerMode}
-                  onChange={(e) =>
-                    setSettings({ ...settings, answerMode: e.target.value })
-                  }
-                >
-                  <option value="free">⌨️ Saisie libre</option>
-                  <option value="mcq">☑️ QCM</option>
-                </select>
+                <span>
+                  {settings.category === "map" ? "Indice" : "Réponses"}
+                </span>
+                {settings.category === "map" ? (
+                  <select
+                    value={settings.mapPromptMode}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        mapPromptMode: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="country">🏳️ Nom du pays</option>
+                    <option value="capital">🏛️ Nom de la capitale</option>
+                  </select>
+                ) : (
+                  <select
+                    value={settings.answerMode}
+                    onChange={(e) =>
+                      setSettings({ ...settings, answerMode: e.target.value })
+                    }
+                  >
+                    <option value="free">⌨️ Saisie libre</option>
+                    <option value="mcq">☑️ QCM</option>
+                  </select>
+                )}
               </label>
               <label>
                 <span>Région</span>
@@ -387,6 +443,25 @@ export default function Versus({ pseudo, go }) {
                 </select>
               </label>
             </div>
+            {settings.category === "map" && (
+              <label className="versus-first-to-find">
+                <input
+                  type="checkbox"
+                  checked={settings.firstToFind}
+                  onChange={(event) =>
+                    setSettings({
+                      ...settings,
+                      firstToFind: event.target.checked,
+                    })
+                  }
+                />
+                <span>
+                  <strong>Premier à trouver</strong>
+                  La première bonne réponse fait passer tout le monde au pays
+                  suivant.
+                </span>
+              </label>
+            )}
             <Button
               className="versus-create-button"
               disabled={busy}
@@ -537,7 +612,9 @@ export default function Versus({ pseudo, go }) {
           💀 Tu es éliminé·e — tu peux regarder la fin du match.
         </p>
       )}
-      <section className="versus-arena">
+      <section
+        className={`versus-arena${settings.category === "map" ? " is-map" : ""}`}
+      >
         <div
           className={`versus-question-visual${question?.prompt ? " is-capital" : ""}`}
         >
@@ -547,59 +624,83 @@ export default function Versus({ pseudo, go }) {
               className="flag"
               src={question.image}
               alt={
-                question?.prompt
-                  ? `Drapeau de ${question.prompt}`
-                  : "Drapeau à deviner"
+                settings.category === "map"
+                  ? "Drapeau du pays à situer"
+                  : question?.prompt
+                    ? `Drapeau de ${question.prompt}`
+                    : "Drapeau à deviner"
               }
             />
           )}
           {!question && <p>En attente de la prochaine question…</p>}
         </div>
-        {settings.answerMode === "mcq" && question?.choices ? (
-          <div className="choices">
-            {question.choices.map((choice) => (
-              <Button
-                key={choice}
-                disabled={submitting.current || eliminated}
-                onClick={() => submit(choice)}
-              >
-                {choice}
-              </Button>
-            ))}
-          </div>
+        {settings.category === "map" ? (
+          <>
+            <Suspense fallback={<p>Chargement de la carte…</p>}>
+              {question && (
+                <VersusMap
+                  questionKey={questionKey}
+                  disabled={eliminated}
+                  submitMapGuess={submitMapGuess}
+                />
+              )}
+            </Suspense>
+            <p className="versus-input-hint">
+              6 essais maximum · Dégâts selon ta vitesse (100 à 250)
+              {settings.firstToFind
+                ? " · Le premier fait avancer tout le monde"
+                : ""}
+            </p>
+          </>
         ) : (
-          <div className="answer">
-            <input
-              ref={input}
-              autoFocus
-              value={answer}
-              disabled={eliminated || !question}
-              placeholder={
-                settings.category === "capitals"
-                  ? "Nom de la capitale…"
-                  : "Nom du pays…"
-              }
-              onChange={(e) => setAnswer(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && submit()}
-            />
-            <Button
-              disabled={eliminated || !question || !answer.trim()}
-              onClick={() => submit()}
-            >
-              Valider
-            </Button>
-          </div>
-        )}
-        <p className="versus-input-hint">
-          Entrée pour valider · Bonne réponse +50 PV / −100 aux adversaires
-        </p>
-        {message && (
-          <p
-            className={`versus-feedback${message.startsWith("✓") ? " is-correct" : message.startsWith("✗") ? " is-wrong" : ""}`}
-            role="status"
-          >
-            {message}
-          </p>
+          <>
+            {settings.answerMode === "mcq" && question?.choices ? (
+              <div className="choices">
+                {question.choices.map((choice) => (
+                  <Button
+                    key={choice}
+                    disabled={submitting.current || eliminated}
+                    onClick={() => submit(choice)}
+                  >
+                    {choice}
+                  </Button>
+                ))}
+              </div>
+            ) : (
+              <div className="answer">
+                <input
+                  ref={input}
+                  autoFocus
+                  value={answer}
+                  disabled={eliminated || !question}
+                  placeholder={
+                    settings.category === "capitals"
+                      ? "Nom de la capitale…"
+                      : "Nom du pays…"
+                  }
+                  onChange={(e) => setAnswer(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && submit()}
+                />
+                <Button
+                  disabled={eliminated || !question || !answer.trim()}
+                  onClick={() => submit()}
+                >
+                  Valider
+                </Button>
+              </div>
+            )}
+            <p className="versus-input-hint">
+              Entrée pour valider · Bonne réponse +50 PV / −100 aux adversaires
+            </p>
+            {message && (
+              <p
+                className={`versus-feedback${message.startsWith("✓") ? " is-correct" : message.startsWith("✗") ? " is-wrong" : ""}`}
+                role="status"
+              >
+                {message}
+              </p>
+            )}
+          </>
         )}
       </section>
     </main>

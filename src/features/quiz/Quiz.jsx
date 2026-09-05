@@ -3,7 +3,16 @@ import { CAPITALS, CAPITAL_ALIASES } from "../../../capitals.js";
 import { answerMatches, formatTime, shuffle } from "../../game";
 import { Back, Button } from "../../components/Layout";
 
-export default function Quiz({ config, finish, quit }) {
+const RANKED_EXIT_WARNING =
+  "Quitter cette partie classée ? Elle sera comptabilisée.";
+
+export default function Quiz({
+  config,
+  finish,
+  quit,
+  pseudo,
+  quitRequest = 0,
+}) {
   const order = useMemo(
     () => shuffle(config.pool).slice(0, config.count || config.pool.length),
     [config],
@@ -17,6 +26,33 @@ export default function Quiz({ config, finish, quit }) {
     [seconds, setSeconds] = useState(0),
     [log, setLog] = useState([]);
   const started = useRef(Date.now());
+  const submitted = useRef(false);
+  const handledQuitRequest = useRef(quitRequest);
+
+  function resultSnapshot() {
+    return {
+      score,
+      total: order.length,
+      seconds,
+      log,
+      config,
+    };
+  }
+
+  function complete(result) {
+    submitted.current = true;
+    finish(result);
+  }
+
+  function requestQuit() {
+    if (!config.ranked) {
+      quit();
+      return;
+    }
+    if (submitted.current || !window.confirm(RANKED_EXIT_WARNING)) return;
+    complete(resultSnapshot());
+  }
+
   useEffect(() => {
     const timer = setInterval(
       () => setSeconds(Math.floor((Date.now() - started.current) / 1000)),
@@ -30,6 +66,43 @@ export default function Quiz({ config, finish, quit }) {
     setAnswered(null);
     setHint(false);
   }, [index]);
+  useEffect(() => {
+    if (quitRequest === handledQuitRequest.current) return;
+    handledQuitRequest.current = quitRequest;
+    requestQuit();
+  }, [quitRequest]);
+  useEffect(() => {
+    if (!config.ranked) return undefined;
+    const beforeUnload = (event) => {
+      if (submitted.current) return;
+      event.preventDefault();
+      event.returnValue = true;
+    };
+    const pageHide = () => {
+      if (submitted.current) return;
+      submitted.current = true;
+      const result = resultSnapshot();
+      fetch("/api/ranked", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pseudo,
+          category: config.category,
+          score: result.score,
+          total: result.total,
+          seconds: result.seconds,
+          details: result.log,
+        }),
+        keepalive: true,
+      }).catch(() => {});
+    };
+    window.addEventListener("beforeunload", beforeUnload);
+    window.addEventListener("pagehide", pageHide);
+    return () => {
+      window.removeEventListener("beforeunload", beforeUnload);
+      window.removeEventListener("pagehide", pageHide);
+    };
+  }, [config, log, order.length, pseudo, score, seconds]);
   const item = order[index];
   const answer =
     config.category === "capitals" ? CAPITALS[item.name] : item.name;
@@ -74,7 +147,7 @@ export default function Quiz({ config, finish, quit }) {
   }
   function next(latest = answered) {
     if (index + 1 === order.length)
-      finish({
+      complete({
         score: score + (latest === true && answered === null ? 1 : 0),
         total: order.length,
         seconds,
@@ -97,7 +170,7 @@ export default function Quiz({ config, finish, quit }) {
   }
   return (
     <main className="card quiz-card">
-      <Back go={quit}>← Changer de continent / mode</Back>
+      <Back go={requestQuit}>← Changer de continent / mode</Back>
       <div className="quiz-top">
         <span className="stamp">
           {config.ranked ? "CLASSÉ" : config.region}

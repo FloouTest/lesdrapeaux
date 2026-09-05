@@ -8,6 +8,8 @@ import { onRequestPost as answer } from "../functions/api/versus/answer.js";
 import { onRequestGet as state } from "../functions/api/versus/state.js";
 import { CAPITALS } from "../capitals.js";
 import { ALL_COUNTRIES } from "../src/data/countries.js";
+import { onRequestPost as saveMapHistory } from "../functions/api/map-history.js";
+import { onRequestGet as playerHistory } from "../functions/api/history.js";
 
 function database() {
   const sqlite = new DatabaseSync(":memory:");
@@ -141,6 +143,89 @@ import {
   onRequestGet as rankings,
   onRequestPost as saveScore,
 } from "../functions/api/leaderboard.js";
+
+test("map versus first-to-find advances everyone and applies speed damage", async () => {
+  const env = database();
+  const questions = Array.from({ length: 5 }, () => ({
+    answer: "FR",
+    countryName: "France",
+    prompt: "France",
+  }));
+  const host = await call(create, env, {
+    pseudo: "Host",
+    maxPlayers: 2,
+    category: "map",
+    continent: "Europe",
+    mapPromptMode: "country",
+    firstToFind: true,
+    flags: questions,
+  });
+  const guest = await call(join, env, { code: host.code, pseudo: "Guest" });
+  await call(start, env, host);
+  await call(state, env, null, `?code=${host.code}&token=${host.token}`);
+  await call(state, env, null, `?code=${host.code}&token=${guest.token}`);
+
+  const result = await call(answer, env, {
+    ...host,
+    index: 0,
+    answer: "FR",
+    longitude: 2,
+    latitude: 46,
+  });
+
+  assert.equal(result.correct, true);
+  assert.equal(result.damage >= 100 && result.damage <= 250, true);
+  assert.deepEqual(
+    result.players.map((player) => player.index),
+    [1, 1],
+  );
+  assert.equal(result.players[1].hp, 1000 - result.damage);
+});
+
+test("map games are persisted with time and returned in player history", async () => {
+  const env = database();
+  env.sqlite.exec(
+    readFileSync(new URL("../schema.sql", import.meta.url), "utf8"),
+  );
+  const saved = await call(saveMapHistory, env, {
+    pseudo: "Alice",
+    promptMode: "capital",
+    score: 8,
+    total: 10,
+    attempts: 31,
+    seconds: 94,
+    details: [],
+  });
+  assert.equal(saved.ok, true);
+  const history = await call(playerHistory, env, null, "?pseudo=Alice");
+  assert.equal(history.history[0].type, "map");
+  assert.equal(history.history[0].seconds, 94);
+  assert.equal(history.history[0].attempts, 31);
+});
+
+test("map history accepts longer custom games", async () => {
+  const env = database();
+  env.sqlite.exec(
+    readFileSync(new URL("../schema.sql", import.meta.url), "utf8"),
+  );
+
+  const saved = await call(saveMapHistory, env, {
+    pseudo: "Alice",
+    promptMode: "country",
+    score: 17,
+    total: 20,
+    attempts: 42,
+    seconds: 180,
+    details: Array.from({ length: 20 }, (_, index) => ({ index })),
+  });
+
+  assert.equal(saved.ok, true);
+  const savedRow = env.sqlite
+    .prepare("SELECT score, total FROM map_history WHERE pseudo = 'Alice'")
+    .get();
+  assert.equal(savedRow.score, 17);
+  assert.equal(savedRow.total, 20);
+});
 
 test("capital ranked progress and leaderboard stay independent of flags", async () => {
   const env = database();

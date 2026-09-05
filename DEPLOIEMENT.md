@@ -102,6 +102,16 @@ wrangler d1 execute flags-quiz-db --remote --file=./migration_v5_capitals.sql
 Anciennes lignes restent catégorie `flags`; progression classée capitales est indépendante.
 Sources du jeu de données documentées dans `capitals.js` (UNTERM + REST Countries).
 
+## Migration historique carte (version 6)
+
+Pour enregistrer le temps, les essais et le score du mode « Trouve sur la carte » :
+
+```bash
+wrangler d1 execute flags-quiz-db --remote --file=./migration_v6_map_history.sql
+```
+
+Cette migration doit être appliquée avant de déployer l'API qui fusionne ces parties dans l'historique.
+
 ## Notes
 
 - Le pseudo reste stocké localement sur chaque appareil (comme un "nom
