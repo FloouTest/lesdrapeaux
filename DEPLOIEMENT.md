@@ -64,6 +64,7 @@ renverra une erreur 500 (le jeu continuera de marcher en mode local).
 Dans le dashboard Cloudflare :
 `Workers & Pages → flags-quiz → Settings → Functions → D1 database bindings`
 → **Add binding**
+
 - Variable name : `DB` (doit correspondre exactement à `env.DB` dans le code)
 - D1 database : `flags-quiz-db`
 
@@ -113,3 +114,15 @@ Sources du jeu de données documentées dans `capitals.js` (UNTERM + REST Countr
   score ≤ total). Pour aller plus loin, tu peux ajouter du rate limiting
   via les règles Cloudflare (dashboard → Security → WAF) ou un Turnstile
   côté client.
+
+## Frontend React + Vite
+
+Le frontend est maintenant compilé avec Vite. Dans **Cloudflare Pages → Settings → Builds & deployments**, configure :
+
+- **Build command** : `npm run build`
+- **Build output directory** : `dist`
+- **Root directory** : racine du dépôt
+
+Le dossier `functions/` reste à la racine et continue de servir `/api/*`. Le binding D1 doit rester nommé `DB`.
+
+Développement frontend : `npm run dev`. Pour connecter Vite à un runtime Pages local, définir `VITE_API_PROXY` vers l’URL de `wrangler pages dev`.
