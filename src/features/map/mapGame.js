@@ -14,6 +14,34 @@ export function panTransform(dragStart, pointer, viewportScale) {
   };
 }
 
+// The <svg> keeps its viewBox's aspect ratio (preserveAspectRatio defaults to
+// "xMidYMid meet"), so whenever the element's own box has a different ratio
+// than the viewBox — e.g. a CSS min-height on a narrow phone — the browser
+// letterboxes it: the map is centered and only fills part of the box, with
+// empty space on one axis. Screen-to-viewBox math must map against that
+// actual centered rectangle, not the raw bounding box, or every computed
+// coordinate drifts off in the direction of the letterboxed axis.
+export function contentRect(bounds, viewBoxWidth, viewBoxHeight) {
+  const boxRatio = bounds.width / bounds.height;
+  const viewRatio = viewBoxWidth / viewBoxHeight;
+  if (boxRatio > viewRatio) {
+    const width = bounds.height * viewRatio;
+    return {
+      left: bounds.left + (bounds.width - width) / 2,
+      top: bounds.top,
+      width,
+      height: bounds.height,
+    };
+  }
+  const height = bounds.width / viewRatio;
+  return {
+    left: bounds.left,
+    top: bounds.top + (bounds.height - height) / 2,
+    width: bounds.width,
+    height,
+  };
+}
+
 export function geometryRings(geometry) {
   if (geometry.type === "Polygon") return geometry.coordinates;
   if (geometry.type === "MultiPolygon") return geometry.coordinates.flat();

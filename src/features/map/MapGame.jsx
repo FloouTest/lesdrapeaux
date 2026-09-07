@@ -11,6 +11,7 @@ import {
   MAP_GAME_LENGTH,
   MAP_MAX_ATTEMPTS,
   clickFoundTarget,
+  contentRect,
   distanceLabel,
   distanceToTarget,
   panTransform,
@@ -46,7 +47,8 @@ const projection = geoNaturalEarth1().fitExtent(
 const path = geoPath(projection);
 
 function viewBoxPoint(event, element) {
-  const bounds = (element ?? event.currentTarget).getBoundingClientRect();
+  const raw = (element ?? event.currentTarget).getBoundingClientRect();
+  const bounds = contentRect(raw, WIDTH, HEIGHT);
   return [
     ((event.clientX - bounds.left) / bounds.width) * WIDTH,
     ((event.clientY - bounds.top) / bounds.height) * HEIGHT,
@@ -116,7 +118,7 @@ export function WorldMap({ target, guesses, outcome, onGuess }) {
       y: event.clientY,
     });
     if (pointers.current.size === 2) {
-      startPinch(map.current.getBoundingClientRect());
+      startPinch(contentRect(map.current.getBoundingClientRect(), WIDTH, HEIGHT));
       return;
     }
     if (pointers.current.size > 2) return;
@@ -149,7 +151,11 @@ export function WorldMap({ target, guesses, outcome, onGuess }) {
       x: event.clientX,
       y: event.clientY,
     });
-    const bounds = map.current.getBoundingClientRect();
+    const bounds = contentRect(
+      map.current.getBoundingClientRect(),
+      WIDTH,
+      HEIGHT,
+    );
     if (pinch.current && pointers.current.size >= 2) {
       const [first, second] = pinchPoints(bounds);
       const center = {
