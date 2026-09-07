@@ -45,8 +45,8 @@ const projection = geoNaturalEarth1().fitExtent(
 );
 const path = geoPath(projection);
 
-function viewBoxPoint(event) {
-  const bounds = event.currentTarget.getBoundingClientRect();
+function viewBoxPoint(event, element) {
+  const bounds = (element ?? event.currentTarget).getBoundingClientRect();
   return [
     ((event.clientX - bounds.left) / bounds.width) * WIDTH,
     ((event.clientY - bounds.top) / bounds.height) * HEIGHT,
@@ -116,7 +116,7 @@ export function WorldMap({ target, guesses, outcome, onGuess }) {
       y: event.clientY,
     });
     if (pointers.current.size === 2) {
-      startPinch(event.currentTarget.getBoundingClientRect());
+      startPinch(map.current.getBoundingClientRect());
       return;
     }
     if (pointers.current.size > 2) return;
@@ -130,13 +130,26 @@ export function WorldMap({ target, guesses, outcome, onGuess }) {
     };
   }
 
+  // The zoom +/-/reset controls sit visually on top of the map (see
+  // .map-zoom-controls), but they're siblings of the <svg> in the DOM, not
+  // descendants of it. A lone tap there should behave like a normal button
+  // click. But when a pinch is already underway (one finger already down on
+  // the map) and the second finger happens to land on that control panel,
+  // it must still join the pinch — otherwise the gesture silently breaks on
+  // touch devices, which is the "pincement impossible" bug on mobile.
+  function handleControlPointerDown(event) {
+    if (event.button !== 0) return;
+    if (pointers.current.size === 0) return;
+    handlePointerDown(event);
+  }
+
   function handlePointerMove(event) {
     if (!pointers.current.has(event.pointerId)) return;
     pointers.current.set(event.pointerId, {
       x: event.clientX,
       y: event.clientY,
     });
-    const bounds = event.currentTarget.getBoundingClientRect();
+    const bounds = map.current.getBoundingClientRect();
     if (pinch.current && pointers.current.size >= 2) {
       const [first, second] = pinchPoints(bounds);
       const center = {
@@ -189,7 +202,7 @@ export function WorldMap({ target, guesses, outcome, onGuess }) {
     );
     drag.current = null;
     if (pointerTravel > 5 || outcome) return;
-    const [screenX, screenY] = viewBoxPoint(event);
+    const [screenX, screenY] = viewBoxPoint(event, map.current);
     const coordinate = projection.invert([
       (screenX - transform.x) / transform.k,
       (screenY - transform.y) / transform.k,
@@ -276,7 +289,14 @@ export function WorldMap({ target, guesses, outcome, onGuess }) {
           })}
         </g>
       </svg>
-      <div className="map-zoom-controls" aria-label="Contrôles de la carte">
+      <div
+        className="map-zoom-controls"
+        aria-label="Contrôles de la carte"
+        onPointerDown={handleControlPointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
+      >
         <button
           type="button"
           onClick={() => zoom(1 / 1.5)}
