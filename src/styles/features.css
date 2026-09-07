@@ -1349,7 +1349,10 @@
   display: block;
   width: 100%;
   cursor: crosshair;
+  touch-action: none;
   user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 .map-world:active {
   cursor: grabbing;
@@ -1417,6 +1420,10 @@
   border-radius: 10px;
   background: #fffdf5;
   box-shadow: 0 3px 12px #1e2a3c29;
+  touch-action: none;
+}
+.map-zoom-controls button {
+  -webkit-tap-highlight-color: transparent;
 }
 .map-zoom-controls button,
 .map-zoom-controls output {
@@ -1580,6 +1587,19 @@
   }
   .map-help {
     display: none;
+  }
+  .map-zoom-controls button,
+  .map-zoom-controls output {
+    min-height: 44px;
+  }
+  .map-zoom-controls button {
+    width: 44px;
+    font-size: 20px;
+  }
+  .map-zoom-controls .map-reset-control {
+    width: auto;
+    padding: 0 13px;
+    font-size: 11px;
   }
   .map-feedback {
     align-items: stretch;
