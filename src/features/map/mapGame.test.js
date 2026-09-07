@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   clickFoundTarget,
+  contentRect,
   distanceLabel,
   distanceToTarget,
   geometryRings,
@@ -61,5 +62,31 @@ describe("map game geography", () => {
     expect(distanceLabel(0.4)).toBe("À moins de 1 km");
     expect(distanceLabel(1234.4)).toContain("1");
     expect(distanceLabel(1234.4)).toContain("234 km");
+  });
+
+  it("returns the box unchanged when its ratio already matches the viewBox", () => {
+    const bounds = { left: 10, top: 20, width: 900, height: 470 };
+    expect(contentRect(bounds, 900, 470)).toEqual(bounds);
+  });
+
+  it("centers the map vertically when a taller box letterboxes it top/bottom", () => {
+    // Mirrors the mobile case: a narrow phone forces the box taller than the
+    // viewBox's own ratio (e.g. via a CSS min-height), so the rendered map
+    // only fills the middle of the box.
+    const bounds = { left: 0, top: 0, width: 375, height: 350 };
+    const rect = contentRect(bounds, 900, 470);
+    expect(rect.left).toBe(0);
+    expect(rect.width).toBe(375);
+    expect(rect.height).toBeCloseTo(195.83, 1);
+    expect(rect.top).toBeCloseTo(77.08, 1);
+  });
+
+  it("centers the map horizontally when a wider box letterboxes it left/right", () => {
+    const bounds = { left: 0, top: 0, width: 1200, height: 470 };
+    const rect = contentRect(bounds, 900, 470);
+    expect(rect.top).toBe(0);
+    expect(rect.height).toBe(470);
+    expect(rect.width).toBeCloseTo(900, 1);
+    expect(rect.left).toBeCloseTo(150, 0);
   });
 });
