@@ -177,6 +177,93 @@ describe("find-on-map game", () => {
     expect(guess).not.toHaveBeenCalled();
   });
 
+  it("still pinches when the second finger lands on the zoom controls", async () => {
+    // Regression test: the zoom +/-/reset panel is a sibling of the <svg>,
+    // absolutely positioned on top of it. A pinch finger that lands there
+    // must still join the gesture instead of being dropped (the mobile bug
+    // where pinch-to-zoom silently did nothing).
+    const guess = vi.fn();
+    const { container } = render(
+      <WorldMap
+        target={mapFeatureFor("FR")}
+        guesses={[]}
+        outcome={null}
+        onGuess={guess}
+      />,
+    );
+    const map = screen.getByRole("img", { name: /Carte interactive du monde/ });
+    map.getBoundingClientRect = () => ({
+      left: 0,
+      top: 0,
+      width: 900,
+      height: 470,
+    });
+    const controls = container.querySelector(".map-zoom-controls");
+
+    dispatchPointer(map, "pointerdown", {
+      pointerId: 1,
+      clientX: 300,
+      clientY: 235,
+    });
+    dispatchPointer(controls, "pointerdown", {
+      pointerId: 2,
+      clientX: 600,
+      clientY: 235,
+    });
+    dispatchPointer(controls, "pointermove", {
+      pointerId: 2,
+      clientX: 750,
+      clientY: 235,
+    });
+    dispatchPointer(controls, "pointerup", {
+      pointerId: 2,
+      clientX: 750,
+      clientY: 235,
+    });
+    dispatchPointer(map, "pointerup", {
+      pointerId: 1,
+      clientX: 300,
+      clientY: 235,
+    });
+
+    await waitFor(() =>
+      expect(screen.getByLabelText("Niveau de zoom")).toHaveTextContent(
+        "150 %",
+      ),
+    );
+    expect(guess).not.toHaveBeenCalled();
+  });
+
+  it("lets a lone tap on the zoom controls behave like a normal click", () => {
+    // Without an active gesture, a single touch/click on the panel must not
+    // be swallowed into drag/pinch tracking.
+    const guess = vi.fn();
+    const { container } = render(
+      <WorldMap
+        target={mapFeatureFor("FR")}
+        guesses={[]}
+        outcome={null}
+        onGuess={guess}
+      />,
+    );
+    const controls = container.querySelector(".map-zoom-controls");
+
+    dispatchPointer(controls, "pointerdown", {
+      pointerId: 1,
+      clientX: 600,
+      clientY: 235,
+    });
+    dispatchPointer(controls, "pointerup", {
+      pointerId: 1,
+      clientX: 600,
+      clientY: 235,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Zoomer" }));
+
+    expect(screen.getByLabelText("Niveau de zoom")).toHaveTextContent("150 %");
+    expect(guess).not.toHaveBeenCalled();
+  });
+
   it("captures the wheel and does not turn a drag into a guess", () => {
     render(<MapGame back={() => {}} />);
     fireEvent.click(screen.getByRole("button", { name: /Nom du pays/ }));
