@@ -342,6 +342,21 @@ export default function Versus({ pseudo, go }) {
     }
     return data;
   }
+  async function rematch() {
+    if (busy) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      await post("rematch", { code, token, flags: buildQuestions(settings) });
+      // The state poll below is still running for this code/token — it
+      // picks up status "active" on its next tick and moves everyone
+      // (host and guests alike) straight to the battle screen.
+    } catch (cause) {
+      setMessage(cause.message);
+    } finally {
+      setBusy(false);
+    }
+  }
   async function quit() {
     try {
       if (token) await post("quit", { code, token });
@@ -573,6 +588,11 @@ export default function Versus({ pseudo, go }) {
         </h1>
         <PlayerRoster players={[...players].sort((a, b) => b.hp - a.hp)} />
         <div className="result-actions">
+          {host && (
+            <Button disabled={busy} onClick={rematch}>
+              {busy ? "Relance…" : "🔁 Rejouer avec ces joueurs"}
+            </Button>
+          )}
           <Button
             onClick={() => {
               setToken("");
@@ -588,6 +608,16 @@ export default function Versus({ pseudo, go }) {
             Retour à l’accueil
           </Button>
         </div>
+        {!host && (
+          <p className="versus-status" role="status">
+            L’hôte peut relancer une revanche avec les mêmes joueurs.
+          </p>
+        )}
+        {message && (
+          <p className="versus-status" role="status">
+            {message}
+          </p>
+        )}
       </main>
     );
   }
