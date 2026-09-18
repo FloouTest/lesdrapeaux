@@ -90,10 +90,10 @@ export async function onRequestPost({ request, env }) {
   }
 }
 
-function nonEmptyString(value) {
+export function nonEmptyString(value) {
   return typeof value === "string" && value.trim().length > 0;
 }
-function validQuestion(question, category, answerMode) {
+export function validQuestion(question, category, answerMode) {
   if (category === "map")
     return (
       question &&
