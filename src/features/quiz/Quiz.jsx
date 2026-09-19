@@ -226,9 +226,11 @@ export default function Quiz({
             <Button
               key={option}
               disabled={answered !== null}
+              aria-pressed={answered === null && option === choice}
               className={
                 (answered !== null && option === answer ? "correct " : "") +
-                (answered === false && option === choice ? "wrong" : "")
+                (answered === false && option === choice ? "wrong " : "") +
+                (answered === null && option === choice ? "selected" : "")
               }
               onClick={() => {
                 setChoice(option);
