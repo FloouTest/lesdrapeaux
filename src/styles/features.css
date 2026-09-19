@@ -111,6 +111,18 @@
   border-color: var(--coral);
   color: var(--coral);
 }
+.choices button.selected {
+  background: var(--select);
+  border-color: var(--teal);
+}
+.choices button.selected::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--teal);
+  border-radius: inherit;
+  pointer-events: none;
+}
 .qcm-validate-row,
 .next-row {
   display: flex;
